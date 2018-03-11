@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 import rospy
-import moveit_commander
 from std_msgs.msg import Float32MultiArray
-import moveit_msgs.msg
-import geometry_msgs.msg
+from geometry_msgs.msg import Point
 import math
 
 # Initialization
@@ -22,12 +20,33 @@ def syn():
     pub_plan.publish(plantype)
     rospy.sleep(1)
     plantype.data = [0, 1]
+    pub_plan.publish(plantype)
 
 def joint_cmd(joints):
 
     target = Float32MultiArray()
     joint_values = [0] + joints
     target.data = joint_values
+    pub_pose.publish(target)
+
+def rotation_cmd(angle, axis = "Z"):
+    
+    target = Float32MultiArray()
+    if axis is "X":
+        target_values = [2] + [math.radians(angle), 1, 0, 0]
+    elif axis is "Y":
+        target_values = [2] + [math.radians(angle), 0, 1, 0]
+    elif axis is "Z":
+        target_values = [2] + [math.radians(angle), 0, 0, 1]
+    target.data = target_values
+    pub_pose.publish(target)
+
+def pose_cmd(pose):
+    
+    target = Float32MultiArray()
+    pose_value = [pose.x, pose.y, pose.z]
+    target_value = [4] + pose_value
+    target.data = target_value
     pub_pose.publish(target)
 
 def init_pose():
@@ -62,9 +81,19 @@ def pick_and_place():
 syn()
 
 # Plan
-init_pose()
-for i in range(0, EPS):
-    pick_and_place()
-init_pose()
+#init_pose()
+#for i in range(0, EPS):
+#    pick_and_place()
+target_pose = Point()
+target_pose.x = 0.3
+target_pose.y = -0.6
+target_pose.z = 0.2
+pose_cmd(target_pose)
+rotation_cmd(90 ,"X")
+
+
+
+
+#init_pose()
 
 

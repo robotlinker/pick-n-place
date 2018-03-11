@@ -1,0 +1,104 @@
+#!/usr/bin/python
+from box_class import *
+from database import *
+from collision_check import *
+from pack import *
+from plot import *
+from operator import attrgetter
+import copy
+
+METHOD = 1
+INFO_DISPLAY = 0
+PLOT = 0
+
+# Database
+given_bin_list, box_list = database('data.xlsx')
+given_bin = given_bin_list[0]
+
+# Preprocessing
+if METHOD is 1:
+    to_pack = sorted(box_list, key = attrgetter('vol'), reverse = True)
+else:
+    to_pack = copy.deepcopy(box_list)
+
+# Fail to pack
+not_packed = []
+# Already packed
+packed = []
+
+# Pack first box
+print "=====Start====="
+first_fit = 0
+for i in to_pack:
+    first_collision, first_box = first_pack_test(given_bin, i)
+    if not first_collision:
+        packed.append(first_box)
+        to_pack.remove(i)
+        first_fit = 1
+        print "The first box '" + i.id + "' is packed!"
+        break
+if not first_fit:
+    print "No box in list can be packed!"
+else:
+    # Pack other box
+    for i in to_pack:
+        print "Packing BOX '" + i.id + "' ..."
+        current_box = i
+        fit = 0
+        k = 0
+        while k < len(packed) and not fit:
+            packed_box = copy.deepcopy(packed[k])
+            for j in range(0,3):
+                if j is 0:
+                    test_p = [packed_box.goal_position[0] + packed_box.inc[0], packed_box.goal_position[1], packed_box.goal_position[2]]
+                elif j is 1:
+                    test_p = [packed_box.goal_position[0], packed_box.goal_position[1] + packed_box.inc[1], packed_box.goal_position[2]]
+                elif j is 2:
+                    test_p = [packed_box.goal_position[0], packed_box.goal_position[1], packed_box.goal_position[2] + packed_box.inc[2]]
+                collision, try_box = pack_test(given_bin, packed, current_box, test_p)
+                if not collision:
+                    packed.append(try_box)
+                    fit = 1
+                    print "BOX '" + try_box.id + "' is packed!"
+                    break
+            k += 1
+        if fit is 0:
+            not_packed.append(i)
+            print "BOX '" + str(i.id) + "' cannot be packed in BIN '" + str(given_bin.id) + "' !"
+# Sequence for robot
+packed = sorted(packed, key = attrgetter('pz', 'py', 'pz'))
+print "=====Done====="
+
+if INFO_DISPLAY:
+    total_box_vol = 0
+    packed_box_vol = 0
+    # Total boxes volumn
+    for i in box_list:
+        total_box_vol += i.vol
+    # Packed box volumn
+    for i in packed:
+        packed_box_vol += i.vol
+
+    print "Packed #: " + str(len(packed)) + "/" + str(len(box_list))
+    print "Bin Volumn: " + str(given_bin.size[0]) + " x " + str(given_bin.size[1]) + " x " + str(given_bin.size[2])
+    print "Total Boxes Volumn: " + str(total_box_vol)
+    print "Theoretical Unpacked Volumn: " + str(max(0, total_box_vol - given_bin.vol))
+    print "Realistic Unpacked Volumn: " + str(total_box_vol - packed_box_vol)
+    print "Utilization: " + str(packed_box_vol / given_bin.vol * 100) + "%"
+
+    if len(packed) is not 0:
+        print "Packing Plan:"
+        for i in packed:
+            i.pose_info()
+    if len(not_packed) is not 0:
+        print "Not packed:"
+        for i in not_packed:
+            i.pose_info()
+if PLOT:
+    draw(given_bin, packed)
+
+def return_plan():
+
+    global packed, given_bin
+
+    return packed, given_bin

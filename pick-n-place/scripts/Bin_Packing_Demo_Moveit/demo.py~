@@ -1,0 +1,51 @@
+#!/usr/bin/env python
+# ROS
+import rospy
+import moveit_commander
+
+# Msg
+from geometry_msgs.msg import Pose, PoseStamped
+
+# Manipulation
+import env
+
+# Bin packing
+from box_class import *
+from plan import *
+
+# Parameters
+
+
+# ROS node
+rospy.init_node("demo", anonymous=True)
+
+# Initiation of Moveit
+scene = moveit_commander.PlanningSceneInterface()
+robot = moveit_commander.RobotCommander() 
+arm = moveit_commander.MoveGroupCommander("right_arm")
+scene = moveit_commander.PlanningSceneInterface()
+rospy.sleep(1)
+
+# Env setup
+env.init(scene)
+
+# Functions
+def test():
+    for i in packed:
+        i.generate_goal_pose(given_bin)
+        scene.add_box(i.id, i.goal_pose, i.size)
+        rospy.sleep(1)
+
+# Plan
+packed, given_bin = return_plan() # get bin packing sol.
+# The following is a loop =v=
+# === req to kinect server ===
+box_pose = PoseStamped()
+rot_detected = 1
+# === end ===
+env.generate_box(scene, packed[0], p) # generate a box in env.
+
+
+
+
+

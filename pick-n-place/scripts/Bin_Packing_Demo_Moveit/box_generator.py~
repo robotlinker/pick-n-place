@@ -1,0 +1,3 @@
+def generate_box(scene, box_i):
+   
+    scene.add_box(box_i.id, i.pose, box_i.size)

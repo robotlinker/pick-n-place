@@ -1,0 +1,42 @@
+#!/usr/bin/python
+from box_class import *
+
+def collision_check(A, B):
+    result = [1, 1, 1]
+    if A.upper_x <= B.lower_x:
+        result[0] = 0
+    if A.lower_x >= B.upper_x:
+        result[0] = 0
+    if A.upper_y <= B.lower_y:
+        result[1] = 0
+    if A.lower_y >= B.upper_y:
+        result[1] = 0
+    if A.upper_z <= B.lower_z:
+        result[2] = 0
+    if A.lower_z >= B.upper_z:
+        result[2] = 0
+    return result[0]*result[1]*result[2]
+
+def bin_collision_check(given_bin, test_box):
+    collision_left = box_class("box_left", [-1, 0, 0], [1, given_bin.length, given_bin.height], 1)
+    collision_right = box_class("box_right",[given_bin.width, 0, 0], [1, given_bin.length, given_bin.height], 1)
+    collision_back = box_class("box_back",[0, -1, 0], [given_bin.width, 1, given_bin.height], 1)
+    collision_front = box_class("box_front",[0, given_bin.length, 0], [given_bin.width, 1, given_bin.height], 1)
+    collision_top = box_class("box_top",[0, 0, given_bin.height], [given_bin.width, given_bin.length, 1], 1)
+
+    result_left = collision_check(test_box, collision_left)
+    result_right = collision_check(test_box, collision_right)
+    result_back = collision_check(test_box, collision_back)
+    result_front = collision_check(test_box, collision_front)
+    result_top = collision_check(test_box, collision_top)
+
+    result = result_left + result_right + result_back + result_front + result_top
+    if result > 0:
+        result = 1
+    return result
+
+
+
+A=box_class('A', [0,0,0],[3,2,1],1)
+Bin=box_class('bin', [0,0,0],[2,2,1],1)
+print bin_collision_check(Bin,A)

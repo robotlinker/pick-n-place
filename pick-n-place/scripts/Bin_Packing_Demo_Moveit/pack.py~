@@ -1,0 +1,32 @@
+#!/usr/bin/python
+from box_class import *
+from collision_check import *
+
+def first_pack_test(given_bin, first_box):
+    collision = 1
+    rot = 1
+    while rot <= 6:
+        try_pose = box_class(first_box.id, given_bin.goal_position, first_box.size, rot)
+        collision_bin = bin_collision_check(given_bin, try_pose)
+        if not collision_bin:
+            try_box = try_pose
+            collision = 0
+            rot = 6
+        rot += 1
+    return collision, try_box
+
+def pack_test(given_bin, packed_box_list, test_box, test_position):
+    collision = 1
+    result_box = [0] * len(packed_box_list)
+    rot = 1
+    while rot <= 6 and collision is 1:
+        try_box = box_class(test_box.id, test_position, test_box.size,rot)
+        result_bin = bin_collision_check(given_bin, try_box)
+        if not result_bin:
+            for i in range(0, len(packed_box_list)):
+                result_box[i] = collision_check(try_box, packed_box_list[i])
+            collision = sum(result_box) + result_bin
+            if collision >= 1:
+                collision = 1
+        rot += 1
+    return collision, try_box

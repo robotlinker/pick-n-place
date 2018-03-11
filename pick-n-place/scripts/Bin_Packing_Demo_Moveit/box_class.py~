@@ -1,0 +1,61 @@
+#!/usr/bin/python
+from geometry_msgs.msg import PoseStamped
+from function import *
+
+class box_class:
+    def __init__(self, name, position, size, r_goal):
+        self.id = str(name)
+        self.size = size
+        self.width = size[0]
+        self.length = size[1]
+        self.height = size[2]
+        self.rot_goal = r_goal
+        self.goal_position = position
+        self.px = position[0]
+        self.py = position[1]
+        self.pz = position[2]
+        self.vol = size[0]*size[1]*size[2]
+        self.current_pose = PoseStamped()
+        self.goal_pose = PoseStamped()
+        self.rpy_goal = [0, 0, 0]
+        if self.rot_goal is 1:
+            self.inc_goal = [size[0], size[1], size[2]]
+            self.rpy_goal = [0, 0, 0]
+        elif self.rot_goal is 2:
+            self.inc_goal = [size[1], size[0], size[2]]
+            self.rpy_goal = [0, 0, 90]
+        elif self.rot_goal is 3:
+            self.inc_goal = [size[0], size[2], size[1]]
+            self.rpy_goal = [90, 0, 0]
+        elif self.rot_goal is 4:
+            self.inc_goal = [size[2], size[0], size[1]]
+            self.rpy_goal = [90, 0, 90]
+        elif self.rot_goal is 5:
+            self.inc_goal = [size[1], size[2], size[0]]
+            self.rpy_goal = [90, 90, 0]
+        elif self.rot_goal is 6:
+            self.inc_goal = [size[2], size[1], size[0]]
+            self.rpy_goal = [0, 90, 0]
+        self.upper_x = self.goal_position[0] + self.inc_goal[0]
+        self.lower_x = self.goal_position[0]
+        self.upper_y = self.goal_position[1] + self.inc_goal[1]
+        self.lower_y = self.goal_position[1]
+        self.upper_z = self.goal_position[2] + self.inc_goal[2]
+        self.lower_z = self.goal_position[2]
+
+    def pose_info(self):
+        print " - id: " + self.id + ", position: " + str(self.goal_position) + ", rot_goalation index: " + str(self.rot_goal) 
+
+    def size_info(self):
+        print " - id: " + self.id + ", size: " + str(self.width) + "x" + str(self.length) + "x" + str(self.height)
+
+    def generate_goal_pose(self, given_bin):
+        self.goal_pose.header.frame_id = "WAIST"  
+        self.goal_pose.pose.position.x = self.goal_position[0] + 0.5*self.inc_goal[0] + given_bin.goal_position[0] - 0.5*given_bin.width
+        self.goal_pose.pose.position.y = self.goal_position[1] + 0.5*self.inc_goal[1] + given_bin.goal_position[1] - 0.5*given_bin.length
+        self.goal_pose.pose.position.z = self.goal_position[2] + 0.5*self.inc_goal[2] + given_bin.goal_position[2]
+        self.goal_pose.pose.orientation = CalOrientation(self.rpy_goal[0], self.rpy_goal[1], self.rpy_goal[2])
+
+    def update_current_pose(self, scene):
+        self.current_pose = scene.get_object_poses([self.id])
+        

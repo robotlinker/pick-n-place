@@ -1,0 +1,30 @@
+import matplotlib as mpl
+from mpl_toolkits.mplot3d import Axes3D
+import numpy as np
+import matplotlib.pyplot as plt
+from box_class import *
+from time import *
+
+def draw(given_bin, box_list, res = 10):
+    #mpl.rcParams['legend.fontsize'] = 10
+    fig = plt.figure('Bin Packing')
+    ax = fig.gca(projection='3d')
+    ax.set_xlim(given_bin.lower_x, given_bin.upper_x)
+    ax.set_ylim(given_bin.lower_y, given_bin.upper_y)
+    ax.set_zlim(given_bin.lower_z, given_bin.upper_z)
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    for box in box_list:
+        a, b = np.meshgrid(np.linspace(box.lower_x, box.upper_x, res), np.linspace(box.lower_y, box.upper_y, res))
+        c, d = np.meshgrid(np.linspace(box.lower_x, box.upper_x, res), np.linspace(box.lower_z, box.upper_z, res))
+        e, f = np.meshgrid(np.linspace(box.lower_y, box.upper_y, res), np.linspace(box.lower_z, box.upper_z, res))
+        surf_color = np.random.rand(3,1)
+        ax.plot_surface(a, b, box.lower_z, color = surf_color)
+        ax.plot_surface(a, b, box.upper_z, color = surf_color)
+        ax.plot_surface(c, box.lower_y, d, color = surf_color)
+        ax.plot_surface(c, box.upper_y, d, color = surf_color)
+        ax.plot_surface(box.lower_x, e, f, color = surf_color)
+        ax.plot_surface(box.upper_x, e, f, color = surf_color)
+    plt.draw()
+
