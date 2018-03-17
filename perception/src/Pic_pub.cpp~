@@ -1,0 +1,29 @@
+#include <ros/ros.h>
+#include <opencv2/opencv.hpp>
+#include <iostream>
+#include <cv_bridge/cv_bridge.h>
+#include <geometry_msgs/Pose.h>
+
+using namespace cv;
+using namespace std;
+
+ros::Publisher pub;
+
+
+int main(int argc, char* argv[])
+{
+  ros::init(argc, argv, "Pic_pub");
+  ros::NodeHandle nh;
+  
+  Mat img;
+  img = imread("/home/wcy/Desktop/obj1.jpg");
+
+  pub.publish (img);
+  // Create a ROS publisher for the output point cloud
+  pub = nh.advertise<const sensor_msgs::ImageConstPtr& msg> ("/left_hand_ueye/image_raw", 1);
+  
+  // Spin
+  ros::spin ();
+                                        
+  return 0;
+}

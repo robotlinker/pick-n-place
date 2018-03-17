@@ -6,9 +6,9 @@ from function import *
 import copy
 
 
-eef_length = 0.1
-pre = 0.1
-post = 0.1
+eef_length = 0.25
+pre = 0.15
+post = 0.15
 
 class box_class:
     def __init__(self, name, position, size, rot_goal=1):
@@ -33,7 +33,7 @@ class box_class:
     def generate_goal_pose(self, given_bin):
         self.goal_pose.position.x = self.goal_position[0]# + 0.5*self.inc_goal[0] + given_bin.goal_position[0] - 0.5*given_bin.width
         self.goal_pose.position.y = self.goal_position[1]# + 0.5*self.inc_goal[1] + given_bin.goal_position[1] - 0.5*given_bin.length
-        self.goal_pose.position.z = self.goal_position[2]# + 0.5*self.inc_goal[2] + given_bin.goal_position[2]
+        self.goal_pose.position.z = self.goal_position[2] + 0.3# + 0.5*self.inc_goal[2] + given_bin.goal_position[2]
 
     def pick(self):
         rospy.logwarn("Picking Box: %s", self.id)
@@ -48,13 +48,14 @@ class box_class:
 
     def place(self, given_bin):
         rospy.logwarn("Placing Box: %s", self.id)
-        self.generate_goal_pose(given_bin)
+        self.goal_pose.position.x = 0.55
+        self.goal_pose.position.y = 0.245
+        self.goal_pose.position.z = -0.15
         pre_place_pose = copy.deepcopy(self.goal_pose)
-        pre_place_pose.position.z += self.height + eef_length + pre
+        pre_place_pose.position.z += pre
         place_pose = copy.deepcopy(self.goal_pose)
-        place_pose.position.z += self.height + eef_length
         post_place_pose = copy.deepcopy(self.goal_pose)
-        post_place_pose.position.z += self.height + eef_length + post
+        post_place_pose.position.z += post
         if self.rot_goal is 1:
             theta = 0
         elif self.rot_goal is 2:

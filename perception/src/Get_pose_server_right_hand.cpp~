@@ -1,0 +1,214 @@
+#include "ros/ros.h"
+#include "perception/GetPose.h"
+#include "geometry_msgs/Pose.h"
+
+#include <opencv2/opencv.hpp>
+#include <iostream>
+#include <cv_bridge/cv_bridge.h>
+
+#include <vector>
+
+
+using namespace cv;
+using namespace std;
+
+Point Center;
+geometry_msgs::Pose output;
+Mat src;
+double Angle;
+float P2M = 4e-4;
+float area_max;
+float area_min;
+
+
+// Function declarations
+void drawAxis(Mat&, Point, Point, Scalar, const float);
+double getOrientation(const vector<Point> &, Mat&);
+
+void drawAxis(Mat& img, Point p, Point q, Scalar colour, const float scale = 0.2)
+{
+  double angle;
+  double hypotenuse;
+  angle = atan2( (double) p.y - q.y, (double) p.x - q.x ); // angle in radians
+  hypotenuse = sqrt( (double) (p.y - q.y) * (p.y - q.y) + (p.x - q.x) * (p.x - q.x));
+  // Here we lengthen the arrow by a factor of scale
+  q.x = (int) (p.x - scale * hypotenuse * cos(angle));
+  q.y = (int) (p.y - scale * hypotenuse * sin(angle));
+  line(img, p, q, colour, 3, CV_AA);
+}
+
+double getOrientation(const vector<Point> &pts, Mat &img)
+{
+  //Construct a buffer used by the pca analysis
+  int sz = static_cast<int>(pts.size());
+  Mat data_pts = Mat(sz, 2, CV_64FC1);
+  for (int i = 0; i < data_pts.rows; ++i)
+  {
+    data_pts.at<double>(i, 0) = pts[i].x;
+    data_pts.at<double>(i, 1) = pts[i].y;
+  }
+  //Perform PCA analysis
+  PCA pca_analysis(data_pts, Mat(), CV_PCA_DATA_AS_ROW);
+  //Store the center of the object
+  Point cntr = Point(static_cast<int>(pca_analysis.mean.at<double>(0, 0)),
+                    static_cast<int>(pca_analysis.mean.at<double>(0, 1)));
+  //Store the eigenvalues and eigenvectors
+  vector<Point2d> eigen_vecs(2);
+  vector<double> eigen_val(2);
+  for (int i = 0; i < 2; ++i)
+  {
+    eigen_vecs[i] = Point2d(pca_analysis.eigenvectors.at<double>(i, 0),
+                            pca_analysis.eigenvectors.at<double>(i, 1));
+    eigen_val[i] = pca_analysis.eigenvalues.at<double>(0, i);
+  }
+  // Draw the principal components
+   
+  Point p1 = cntr + 0.02 * Point(static_cast<int>(eigen_vecs[0].x * eigen_val[0]), static_cast<int>(eigen_vecs[0].y * eigen_val[0]));
+  Point p2 = cntr - 0.02 * Point(static_cast<int>(eigen_vecs[1].x * eigen_val[1]), static_cast<int>(eigen_vecs[1].y * eigen_val[1]));
+  drawAxis(img, cntr, p1, Scalar(0, 0, 255), 1);
+  drawAxis(img, cntr, p2, Scalar(0, 255, 0), 1);
+  circle(img, cntr, 5, Scalar(255, 0, 0), -1);
+  double angle = atan2(eigen_vecs[0].x, eigen_vecs[0].y); // orientation in radians
+  Center = cntr;
+  return angle;
+}
+
+void imageCb (const sensor_msgs::ImageConstPtr& msg)
+{
+  // Load image
+  cv_bridge::CvImagePtr cv_ptr;
+  cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+  src = cv_ptr->image;
+}
+
+bool GetPose(perception::GetPose::Request  &req,
+             perception::GetPose::Response &res)
+{
+  if( req.signal == 0 )
+  {
+    res.dx = 0;
+    res.dy = 0;
+    res.dz = 0;
+    res.correct = 0;
+  }
+  else
+  { 
+    Mat gray;
+    cvtColor(src, gray, COLOR_BGR2GRAY);
+    // Convert image to binary
+    Mat bw;
+    threshold(gray, bw, 230, 255, 1);
+    // Find all the contours in the thresholded image
+    vector<Vec4i> hierarchy;
+    vector<vector<Point> > contours;
+    findContours(bw, contours, hierarchy, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
+    
+    // Filter size
+    vector<vector<Point> > filt;
+    vector<int> Ar;
+    for (size_t i = 0; i < contours.size(); ++i)
+    {
+      // Calculate the area of each contour
+      double area = contourArea(contours[i]);
+        
+      // Ignore contours that are too small or too large
+      if (req.type == "center"){
+          area_min = 1e2;
+          area_max = 5e3;
+      }
+      if (req.type == "area"){
+          area_min = 1e3;
+          area_max = 1e5;
+      }
+      if (area < area_min || area_max < area) continue;
+
+      filt.push_back(contours[i]);
+      Ar.push_back(area);
+    }    
+    
+    // Sort centers
+    vector<int> Ct;
+    for (size_t i = 0; i < filt.size(); ++i)
+    {
+      // Find the orientation of each shape
+      getOrientation(filt[i], src);
+      Ct.push_back(Center.x);
+      cout << Center.x << endl;
+    }
+    //cout << "===" << endl;
+ 
+    // Publish output
+    if (req.type == "center"){
+      vector<vector<Point> > tmp = filt;
+      bool sorted;
+      for( size_t i = 0; i < filt.size()-1; i++ )
+      {
+        sorted = true;
+        for( size_t j = 0; j < filt.size()-i-1; j++ )
+          if (Ct[j] > Ct[j+1]){ 
+            //cout << "change" << i << "(" << Ct[j] << " and" << Ct[j+1] << ")" << endl;
+            tmp[j] = filt[j];
+            filt[j] = filt[j+1];
+            filt[j+1] = tmp[j];
+            sorted = false;}
+        if (sorted) break;
+      }
+      //cout << "===" << endl;
+      for( size_t i = 0; i < filt.size(); i++ ){
+        getOrientation(filt[i], src);  
+        //cout << Center.x << endl;
+      }
+      Angle = getOrientation(filt[filt.size()-req.signal], src);
+      //cout << "center: " << Center.x << endl;
+      }
+    else if (req.type == "area"){
+      vector<vector<Point> > tmp = filt;
+      bool sorted;
+      for( size_t i = 0; i < filt.size()-1; i++ )
+      {
+        sorted = true;
+        for( size_t j = 0; j < filt.size()-i-1; j++ )
+          if (Ar[j] > Ar[j+1]){ 
+            //cout << "change" << i << "(" << Ct[j] << " and" << Ct[j+1] << ")" << endl;
+            tmp[j] = filt[j];
+            filt[j] = filt[j+1];
+            filt[j+1] = tmp[j];
+            sorted = false;}
+        if (sorted) break;
+      }
+      Angle = getOrientation(filt[filt.size()-req.signal], src);
+      //cout << "area" << endl;
+      }
+    output.position.x = -( Center.y - 240) * P2M + 0.005;
+    output.position.y = -( Center.x - 320) * P2M + 0.015;
+    output.position.z = Angle * 180 / CV_PI - 180;
+    if( output.position.z > 180 )
+      output.position.z += -360;
+    if( output.position.z < -180 )
+      output.position.z += 360;
+    if( output.position.z > 90 && output.position.z <= 180 )
+      output.position.z += -180;
+    if( output.position.z < -90 && output.position.z >= -180 )
+      output.position.z += 180;
+
+    //cout << output << endl;
+    res.dx = output.position.x;
+    res.dy = output.position.y;
+    res.dz = output.position.z;
+    res.correct = 1;
+  }
+  return true;
+}
+
+int main(int argc, char **argv)
+{
+  ros::init(argc, argv, "Get_pose_server_right_hand");
+  ros::NodeHandle nh;
+
+  ros::Subscriber sub = nh.subscribe ("/usb_cam_right/image_rect_color", 1, imageCb);
+
+  ros::ServiceServer service = nh.advertiseService("Get_pose_right", GetPose);
+  ros::spin();
+
+  return 0;
+}

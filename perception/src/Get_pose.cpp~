@@ -1,0 +1,144 @@
+#include <ros/ros.h>
+#include <opencv2/opencv.hpp>
+#include <iostream>
+#include <cv_bridge/cv_bridge.h>
+#include <geometry_msgs/Pose.h>
+
+using namespace cv;
+using namespace std;
+
+ros::Publisher pub;
+
+
+Point Center;
+double Angle;
+float P2M = 2.655e-4;
+int sig = 0;
+
+// Function declarations
+void drawAxis(Mat&, Point, Point, Scalar, const float);
+double getOrientation(const vector<Point> &, Mat&);
+
+void drawAxis(Mat& img, Point p, Point q, Scalar colour, const float scale = 0.2)
+{
+  double angle;
+  double hypotenuse;
+  angle = atan2( (double) p.y - q.y, (double) p.x - q.x ); // angle in radians
+  hypotenuse = sqrt( (double) (p.y - q.y) * (p.y - q.y) + (p.x - q.x) * (p.x - q.x));
+  // Here we lengthen the arrow by a factor of scale
+  q.x = (int) (p.x - scale * hypotenuse * cos(angle));
+  q.y = (int) (p.y - scale * hypotenuse * sin(angle));
+  line(img, p, q, colour, 3, CV_AA);
+}
+
+double getOrientation(const vector<Point> &pts, Mat &img)
+{
+  //Construct a buffer used by the pca analysis
+  int sz = static_cast<int>(pts.size());
+  Mat data_pts = Mat(sz, 2, CV_64FC1);
+  for (int i = 0; i < data_pts.rows; ++i)
+  {
+    data_pts.at<double>(i, 0) = pts[i].x;
+    data_pts.at<double>(i, 1) = pts[i].y;
+  }
+  //Perform PCA analysis
+  PCA pca_analysis(data_pts, Mat(), CV_PCA_DATA_AS_ROW);
+  //Store the center of the object
+  Point cntr = Point(static_cast<int>(pca_analysis.mean.at<double>(0, 0)),
+                    static_cast<int>(pca_analysis.mean.at<double>(0, 1)));
+  //Store the eigenvalues and eigenvectors
+  vector<Point2d> eigen_vecs(2);
+  vector<double> eigen_val(2);
+  for (int i = 0; i < 2; ++i)
+  {
+    eigen_vecs[i] = Point2d(pca_analysis.eigenvectors.at<double>(i, 0),
+                            pca_analysis.eigenvectors.at<double>(i, 1));
+    eigen_val[i] = pca_analysis.eigenvalues.at<double>(0, i);
+  }
+  // Draw the principal components
+   
+  Point p1 = cntr + 0.02 * Point(static_cast<int>(eigen_vecs[0].x * eigen_val[0]), static_cast<int>(eigen_vecs[0].y * eigen_val[0]));
+  Point p2 = cntr - 0.02 * Point(static_cast<int>(eigen_vecs[1].x * eigen_val[1]), static_cast<int>(eigen_vecs[1].y * eigen_val[1]));
+  drawAxis(img, cntr, p1, Scalar(0, 0, 255), 1);
+  drawAxis(img, cntr, p2, Scalar(0, 255, 0), 1);
+  circle(img, cntr, 5, Scalar(255, 0, 0), -1);
+  double angle = atan2(eigen_vecs[0].y, eigen_vecs[0].x); // orientation in radians
+  Center = cntr;
+  return angle;
+}
+
+void imageCb (const sensor_msgs::ImageConstPtr& msg)
+{
+  {
+  // Load image
+  cv_bridge::CvImagePtr cv_ptr;
+  cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+  Mat src = cv_ptr->image;
+  Mat gray;
+  cvtColor(src, gray, COLOR_BGR2GRAY);
+  // Convert image to binary
+  Mat bw;
+  threshold(gray, bw, 50, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
+  // Find all the contours in the thresholded image
+  vector<Vec4i> hierarchy;
+  vector<vector<Point> > contours;
+  findContours(bw, contours, hierarchy, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
+    
+  // Filter size
+  vector<vector<Point> > filt;
+  for (size_t i = 0; i < contours.size(); ++i)
+  {
+    // Calculate the area of each contour
+    double area = contourArea(contours[i]);
+        
+    // Ignore contours that are too small or too large
+    if (area < 1e3 || 1e5 < area) continue;
+
+    filt.push_back(contours[i]);
+  }    
+  
+  // Sort contours
+  vector<vector<Point> > tmp = filt;
+  for( size_t i = 0; i < filt.size()-1; i++ )
+  {
+    int k = i;
+    for( size_t j = i+1; j < filt.size(); j++ )
+    if( contourArea(filt[k]) > contourArea(filt[j]) )
+      k = j;
+    tmp[i] = filt[i];
+    filt[i] = filt[k];
+    filt[k] = tmp[i];
+  }
+
+  // Publish output
+  geometry_msgs::Pose output;
+  for (size_t i = tmp.size()-1; i < tmp.size(); ++i)
+  {
+    Angle = getOrientation(tmp[i], src);
+    output.position.x = -( Center.y - 240) * P2M + 0.075;
+    output.position.y = -( Center.x - 276) * P2M;
+    output.position.z = -90 - Angle * 180 / CV_PI;
+  }
+  //cout << output << endl;
+  // Publish the data
+  pub.publish (output);
+
+}
+
+int main(int argc, char* argv[])
+{
+  ros::init(argc, argv, "Get_pose");
+  ros::NodeHandle nh;
+  
+  
+  // Create a ROS subscriber for the input point cloud
+  ros::Subscriber sub = nh.subscribe ("/left_hand_ueye/image_raw", 1, imageCb);
+  
+  // Create a ROS publisher for the output point cloud
+  pub = nh.advertise<geometry_msgs::Pose> ("/pose_compensation", 1);
+  
+  // Spin
+  ros::spin ();
+                                        
+  return 0;
+}

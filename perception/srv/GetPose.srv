@@ -1,0 +1,6 @@
+int64 signal
+---
+float32 dx
+float32 dy
+float32 dz
+int32 flag

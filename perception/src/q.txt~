@@ -1,0 +1,4 @@
+static geometry_msgs::Quaternion tf::createQuaternionMsgFromRollPitchYaw	(	double 	roll,
+double 	pitch,
+double 	yaw 
+)

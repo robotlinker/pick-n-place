@@ -8,6 +8,7 @@ from move import *
 from box_class import *
 from database import *
 from function import *
+import camera_server as cs
 
 # Initialization
 pub_pose = rospy.Publisher('moveAPI_cmd', Float32MultiArray, queue_size=1000)
@@ -26,13 +27,24 @@ def syn():
     plantype.data = [0, 1]
     pub_plan.publish(plantype)
 
-def init_pose():  
-    pub_pose.publish(joint_cmd([-52.6, -41.9, 91.05, 42.6, 89.9, 37.0]))
+def initial_pose():
+    rospy.logwarn("INITIAL POSE")  
+    pub_pose.publish(joint_cmd([0, 0, 0, 0, 0, 0]))
+    rospy.sleep(7)
+
+def grasp_pose():  
+    rospy.logwarn("GRASP POSE")  
+    pub_pose.publish(joint_cmd([-30, -31.46, 112.90, 59.11, 91.27, -53.87]))
+
+def detection_pose():
+    rospy.logwarn("DETECTION POSE")  
+    pub_pose.publish(joint_cmd([-47.2, -32.0, 78.6, 6.7, 110.2, -78.7]))
+    rospy.sleep(7)
 
 def end_pose():
     target = Pose()
     target.position.x = 0.3
-    target.position.y = -0.6
+    target.position.y = 0.6
     target.position.z = 0.2
     pub_pose.publish(pose_cmd(target))
 
@@ -60,7 +72,7 @@ def pick(box_i):
     pub_pose.publish(target[2])
     rospy.sleep(1)
     pub_pose.publish(target[3])
-    rospy.sleep(2)    
+    rospy.sleep(7)    
 
 def place(box_i):
     target = box_i.place(given_bin_list[0])
@@ -70,21 +82,31 @@ def place(box_i):
     pub_pose.publish(target[2])
     rospy.sleep(1)
     pub_pose.publish(target[3])
-    rospy.sleep(1)  
+    rospy.sleep(2)  
 
 # Synchronization
 syn()
 
 # Initial Setup
-init_pose()
+initial_pose()
 
 # Plan
 rospy.logwarn("START!")
 given_bin_list, box_list = database("data.xlsx") # Load database
 BPplanner(given_bin_list, box_list)
 i = box_list[0]
-vision(i)
-pick(i)
-#place(i)
-end_pose()
+
+while not rospy.is_shutdown():
+    detection_pose()
+    if cs.pick(i) is 0:
+        print "No Object detected!"
+        continue
+    else:
+        print "Object detected!"
+    grasp_pose()
+    pick(i)
+    place(i)
+    raw_input("Continue...")
 rospy.logwarn("FINISH!")
+
+
