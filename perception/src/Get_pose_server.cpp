@@ -1,5 +1,5 @@
 #include "ros/ros.h"
-#include "perception/GetPose.h"
+#include "perception_msgs/GetPose.h"
 #include "geometry_msgs/Pose.h"
 #include "sensor_msgs/image_encodings.h"
 
@@ -82,8 +82,8 @@ void imageCb (const sensor_msgs::ImageConstPtr& msg)
   src = cv_ptr->image;
 }
 
-bool GetPose(perception::GetPose::Request  &req,
-             perception::GetPose::Response &res)
+bool GetPose(perception_msgs::GetPose::Request  &req,
+             perception_msgs::GetPose::Response &res)
 {
   if( req.signal == 0 )
   {

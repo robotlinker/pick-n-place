@@ -1,5 +1,5 @@
 #include "ros/ros.h"
-#include "perception/GetPose.h"
+#include "perception_msgs/GetPose.h"
 #include <cstdlib>
 
 int main(int argc, char **argv)
@@ -7,8 +7,8 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "GetPose_client");
 
   ros::NodeHandle nh;
-  ros::ServiceClient client = nh.serviceClient<perception::GetPose>("Get_pose");
-  perception::GetPose srv;
+  ros::ServiceClient client = nh.serviceClient<perception_msgs::GetPose>("Get_pose");
+  perception_msgs::GetPose srv;
   srv.request.signal = 1;
   while(ros::ok){
     if (client.call(srv))
