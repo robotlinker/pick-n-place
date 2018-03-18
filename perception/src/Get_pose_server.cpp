@@ -90,6 +90,7 @@ bool GetPose(perception_msgs::GetPose::Request  &req,
     res.dx = 0;
     res.dy = 0;
     res.dz = 0;
+    res.flag = 0;
   }
   else
   { 
@@ -103,7 +104,7 @@ bool GetPose(perception_msgs::GetPose::Request  &req,
     vector<vector<Point> > contours;
     findContours(bw, contours, hierarchy, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
     
-    // Sort centers
+    // Sort areas
     vector<vector<Point> > filt;
     for (size_t i = 0; i < contours.size(); ++i)
     {
@@ -114,32 +115,12 @@ bool GetPose(perception_msgs::GetPose::Request  &req,
       if (area < 1e4 || 1e5 < area) continue;
 
       filt.push_back(contours[i]);
+      Scalar color = Scalar(0, 0, 255);
+      drawContours( src, contours, i, color, 2, 8, hierarchy, 0, Point());
     }  
-    vector<int> Ct;
-    for (size_t i = 0; i < filt.size(); ++i)
-    {
-      // Find the orientation of each shape
-      //getOrientation(filt[i], src);
-      Ct.push_back(Center.x);
-    }
- 
+    
     // Publish output
-    vector<vector<Point> > tmp = filt;
-    bool sorted;
-    if(Ct.size() != 0){
-      for( size_t i = 0; i < filt.size()-1; i++ )
-      {
-        sorted = true;
-        for( size_t j = 0; j < filt.size()-i-1; j++ )
-          if (Ct[j] > Ct[j+1]){ 
-            //cout << "change" << i << "(" << Ct[j] << " and" << Ct[j+1] << ")" << endl;
-            tmp[j] = filt[j];
-            filt[j] = filt[j+1];
-            filt[j+1] = tmp[j];
-            sorted = false;
-          }
-        if (sorted) break;
-      }
+    if(filt.size() != 0){
       for( size_t i = 0; i < filt.size(); i++ ){
         getOrientation(filt[i], src);  
       }
@@ -147,8 +128,6 @@ bool GetPose(perception_msgs::GetPose::Request  &req,
       output.position.x = ( Center.x - 320) * P2M;
       output.position.y = -( Center.y - 240) * P2M;
       output.position.z = Angle * 180 / CV_PI - 180;
-
-      //cout << Center.x << "," << Center.y << endl;
 
       res.dx = output.position.x;
       res.dy = output.position.y;

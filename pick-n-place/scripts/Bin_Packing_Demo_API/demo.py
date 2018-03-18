@@ -16,7 +16,7 @@ pub_plan = rospy.Publisher('plan_type', Float32MultiArray, queue_size=1)
 rospy.init_node('demo', anonymous=True)
 
 # Parameters
-EPS = 3
+
 
 # Functions
 def syn():
@@ -41,23 +41,6 @@ def detection_pose():
     pub_pose.publish(joint_cmd([-47.2, -32.0, 78.6, 6.7, 110.2, -78.7]))
     rospy.sleep(7)
 
-def end_pose():
-    target = Pose()
-    target.position.x = 0.3
-    target.position.y = 0.6
-    target.position.z = 0.2
-    pub_pose.publish(pose_cmd(target))
-
-def vision(obj):
-    # Initial pose of box
-    object_pose = Pose()
-    object_pose.position.x = 0.3
-    object_pose.position.y = -0.6
-    object_pose.position.z = -0.5
-    object_pose.orientation = RPY2q([0, 0, 0])
-    obj.current_pose = object_pose
-    rospy.sleep(5)
-
 def BPplanner(given_bin_list, box_list):
     # Goal pose of box
     for i in box_list:
@@ -68,7 +51,7 @@ def pick(box_i):
     target = box_i.pick()
     pub_pose.publish(target[0])
     rospy.sleep(1)
-    #pub_pose.publish(target[1])
+    #pub_pose.publish(target[1]) # orientation
     pub_pose.publish(target[2])
     rospy.sleep(1)
     pub_pose.publish(target[3])
@@ -78,7 +61,7 @@ def place(box_i):
     target = box_i.place(given_bin_list[0])
     pub_pose.publish(target[0])
     rospy.sleep(1)
-    #pub_pose.publish(target[1])
+    #pub_pose.publish(target[1]) # orientation
     pub_pose.publish(target[2])
     rospy.sleep(1)
     pub_pose.publish(target[3])
