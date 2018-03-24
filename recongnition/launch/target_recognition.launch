@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- target recognition node -->
+  <!--remap from="sensor_cloud" to="/kinect/depth_registered/points"/-->
+  <remap from="sensor_cloud" to="/kinect/qhd/points"/>
+  <node pkg="recongnition" type="target_recognition_service" name="target_recognition_service" output="screen">
+        <rosparam command="load" file="$(find recongnition)/config/target_recognition_parameters.yaml"/>
+  </node>
+
+</launch>
