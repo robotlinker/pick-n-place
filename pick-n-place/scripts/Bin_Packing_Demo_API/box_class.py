@@ -1,7 +1,6 @@
 #!/usr/bin/python
 import rospy
 from geometry_msgs.msg import Pose
-from move import *
 from function import *
 import copy
 
@@ -44,9 +43,9 @@ class box_class:
         post_grasp_pose = copy.deepcopy(self.current_pose)
         post_grasp_pose.position.z += eef_length + post
         theta = q2RPY(self.current_pose.orientation)[2]
-        return [pose_cmd(pre_grasp_pose), rotation_cmd(theta), pose_cmd(grasp_pose), pose_cmd(post_grasp_pose)]
+        return [pre_grasp_pose, theta, grasp_pose, post_grasp_pose]
 
-    def place(self, given_bin):
+    def place(self):
         rospy.logwarn("Placing Box: %s", self.id)
         self.goal_pose.position.x = 0.55
         self.goal_pose.position.y = 0.245
@@ -60,4 +59,4 @@ class box_class:
             theta = 0
         elif self.rot_goal is 2:
             theta = 90
-        return [pose_cmd(pre_place_pose), rotation_cmd(theta), pose_cmd(place_pose), pose_cmd(post_place_pose)]
+        return [pre_place_pose, theta, place_pose, post_place_pose]

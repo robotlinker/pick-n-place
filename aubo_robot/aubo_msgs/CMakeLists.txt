@@ -18,6 +18,7 @@ add_service_files(
    FILES
    SetPayload.srv
    SetIO.srv
+   Move.srv
 )
 
 ## Generate added messages and services with any dependencies listed here

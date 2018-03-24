@@ -32,6 +32,7 @@ AuboDriver::AuboDriver():BufferSize(200),io_flag_delay_(0.02)
 
     rib_pub = nh.advertise<std_msgs::Int32MultiArray>("rib_status", 100);
     io_srv_ = nh.advertiseService("aubo_driver/set_io",&AuboDriver::setIO, this);
+    move_srv_ = nh.advertiseService("aubo_driver/move", &AuboDriver::move, this);
 
     // update_joint_state
     moveIt_controller_subs = nh.subscribe("moveItController_cmd", 2000, &AuboDriver::MoveItPosCallback,this);
@@ -317,6 +318,62 @@ void AuboDriver::TeachCallback(const std_msgs::Float32MultiArray::ConstPtr &msg)
         else
         {
             //1 for MoveIt
+        }
+    }
+}
+
+bool AuboDriver::move(aubo_msgs::Move::Request &req, aubo_msgs::Move::Response &res)
+{
+    if(controlMode == aubo_driver::SendTargetGoal)
+    {
+        if(req.type == 0)
+        {
+            double joints[6] = {req.data[0],req.data[1],req.data[2],req.data[3],req.data[4],req.data[5]};
+            if(road_point_compare(joints,targetPoint))
+            {
+                memcpy(targetPoint, joints, sizeof(double) * ARM_DOF);
+                if(ControllerConnectedFlag)
+                {
+                    int ret = robotService.robotServiceJointMove(joints, true);
+                    ROS_INFO("move to the goal with API! %d", ret);
+                    if(ret == 0)
+                    {
+                        ROS_INFO("move to the goal with API!");
+                        res.success = true;
+                    }
+                    else
+                        res.success = false;
+                }
+            }
+        }
+        else if(req.type==4)
+        {
+            aubo_robot_namespace::CoordCalibrateByJointAngleAndTool coordCalibrate;
+            coordCalibrate.coordType = aubo_robot_namespace::BaseCoordinate;
+            aubo_robot_namespace::Pos coordPose;
+            coordPose.x = req.data[0];
+            coordPose.y = req.data[1];
+            coordPose.z = req.data[2];
+            aubo_robot_namespace::ToolInEndDesc eefPose;
+            eefPose.toolInEndPosition.x = 0;
+            eefPose.toolInEndPosition.y = 0;
+            eefPose.toolInEndPosition.z = 0;
+            eefPose.toolInEndOrientation.w = 1;
+            eefPose.toolInEndOrientation.x = 0;
+            eefPose.toolInEndOrientation.y = 0;
+            eefPose.toolInEndOrientation.z = 0;
+            if(ControllerConnectedFlag)
+            {
+                int ret = robotService.robotMoveJointToTargetPosition(coordCalibrate, coordPose, eefPose, true);
+                ROS_INFO("move to the goal with API! %d", ret);
+                if(ret == 0)
+                {
+                    ROS_INFO("move to the goal with API!");
+                    res.success = true;
+                }
+                else
+                    res.success = false;
+            }
         }
     }
 }

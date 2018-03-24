@@ -31,6 +31,7 @@ double get_robot_one_io_status( our_contorl_io_type  io_type, our_contorl_io_mod
 #include <std_msgs/Float32MultiArray.h>
 #include <std_msgs/Int32.h>
 #include <std_msgs/Int32MultiArray.h>
+#include <aubo_msgs/Move.h>
 #include <aubo_msgs/SetIO.h>
 #include <aubo_msgs/SetPayload.h>
 #include <aubo_msgs/SetIORequest.h>
@@ -140,6 +141,7 @@ namespace aubo_driver
             void updateControlStatus();
             void run();
             bool setIO(aubo_msgs::SetIORequest& req, aubo_msgs::SetIOResponse& resp);
+            bool move(aubo_msgs::Move::Request& req, aubo_msgs::Move::Response& resp);
 
         public:
             static bool IsRealRobotExist;
@@ -186,6 +188,7 @@ namespace aubo_driver
             ros::Timer io_publish_timer;
 
             ros::ServiceServer io_srv_;
+            ros::ServiceServer move_srv_;
             std::thread* mb_publish_thread_;
 
             double io_flag_delay_;
