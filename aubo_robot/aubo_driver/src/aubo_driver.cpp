@@ -33,11 +33,10 @@ AuboDriver::AuboDriver():BufferSize(200),io_flag_delay_(0.02)
     rib_pub = nh.advertise<std_msgs::Int32MultiArray>("rib_status", 100);
     io_srv_ = nh.advertiseService("aubo_driver/set_io",&AuboDriver::setIO, this);
 
-    //    update_joint_state
+    // update_joint_state
     moveIt_controller_subs = nh.subscribe("moveItController_cmd", 2000, &AuboDriver::MoveItPosCallback,this);
     teach_subs = nh.subscribe("teach_cmd", 10, &AuboDriver::TeachCallback,this);
     moveAPI_subs = nh.subscribe("moveAPI_cmd", 10, &AuboDriver::AuboAPICallback,this);
-
     plan_type_sub = nh.subscribe("plan_type", 1, &AuboDriver::plantypeCallback,this);
 }
 

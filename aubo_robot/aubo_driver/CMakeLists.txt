@@ -41,8 +41,12 @@ set(${PROJECT_NAME}_SOURCES1
 set(${PROJECT_NAME}_SOURCES2
     src/testIO.cpp
 )
+set(${PROJECT_NAME}_SOURCES3
+    src/IO_server.cpp
+)
 add_executable(aubo_driver ${${PROJECT_NAME}_SOURCES1})
 add_executable(testIO ${${PROJECT_NAME}_SOURCES2})
+add_executable(IO_server ${${PROJECT_NAME}_SOURCES3})
 
 #LINK_LIBRARIES(${CMAKE_CURRENT_SOURCE_DIR}/lib)
 
@@ -51,6 +55,7 @@ target_link_libraries(aubo_driver ${catkin_LIBRARIES} pthread)
 target_link_libraries(aubo_driver ${catkin_LIBRARIES} libauborobotcontroller.so)
 
 target_link_libraries(testIO ${catkin_LIBRARIES})
+target_link_libraries(IO_server ${catkin_LIBRARIES})
 
 install(DIRECTORY launch DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
@@ -62,5 +67,6 @@ install(DIRECTORY include/${PROJECT_NAME}/
 
 add_dependencies(aubo_driver aubo_msgs_gencpp)
 add_dependencies(testIO aubo_msgs_gencpp)
+add_dependencies(IO_server aubo_msgs_gencpp)
 
 

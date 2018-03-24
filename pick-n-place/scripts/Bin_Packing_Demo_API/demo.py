@@ -9,6 +9,7 @@ from box_class import *
 from database import *
 from function import *
 import camera_server as cs
+import eef_server as es
 
 # Initialization
 pub_pose = rospy.Publisher('moveAPI_cmd', Float32MultiArray, queue_size=1000)
@@ -51,19 +52,20 @@ def pick(box_i):
     target = box_i.pick()
     pub_pose.publish(target[0])
     rospy.sleep(1)
-    #pub_pose.publish(target[1]) # orientation
     pub_pose.publish(target[2])
-    rospy.sleep(1)
+    rospy.sleep(5)
+    es.on()
+    rospy.sleep(3)
     pub_pose.publish(target[3])
-    rospy.sleep(7)    
+    rospy.sleep(5)    
 
 def place(box_i):
     target = box_i.place(given_bin_list[0])
     pub_pose.publish(target[0])
     rospy.sleep(1)
-    #pub_pose.publish(target[1]) # orientation
     pub_pose.publish(target[2])
-    rospy.sleep(1)
+    rospy.sleep(7)
+    es.off()
     pub_pose.publish(target[3])
     rospy.sleep(2)  
 
