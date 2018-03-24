@@ -1,5 +1,4 @@
 #include "aubo_driver/aubo_driver.h"
-
 #include <string>
 #include <sys/timeb.h>
 
