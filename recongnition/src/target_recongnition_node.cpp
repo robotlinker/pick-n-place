@@ -1,6 +1,7 @@
 #include <geometry_msgs/Pose.h>
 #include <ros/ros.h>
-#include <recongnition/GetTargetPose.h>
+#include <recongnition_msgs/GetTargetPose.h>
+
 
 int main(int argc, char **argv)
 {
@@ -19,7 +20,7 @@ int main(int argc, char **argv)
   ros::ServiceClient target_recognition_client;
 
   // target recognition client (perception)
-  target_recognition_client = nh.serviceClient<recongnition::GetTargetPose>("target_recognition");
+  target_recognition_client = nh.serviceClient<recongnition_msgs::GetTargetPose>("target_recognition");
 
   if(ros::ok() && !target_recognition_client.waitForExistence(ros::Duration(2.0f)))
   {
@@ -35,11 +36,11 @@ int main(int argc, char **argv)
   shape.dimensions[2] = 0.1; //cfg.BOX_SIZE.getZ();
 
   // creating request object
-  recongnition::GetTargetPose srv;
+  recongnition_msgs::GetTargetPose srv;
   srv.request.shape = shape;
   srv.request.world_frame_id = "world";
   //srv.request.ar_tag_frame_id = cfg.AR_TAG_FRAME_ID;
-  srv.request.ar_tag_frame_id = "1";
+  srv.request.ar_tag_frame_id = "marker_1";
 
   geometry_msgs::Pose place_pose;
   //tf::poseTFToMsg(cfg.BOX_PLACE_TF,place_pose);

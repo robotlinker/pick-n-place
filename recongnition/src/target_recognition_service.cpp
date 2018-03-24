@@ -25,7 +25,7 @@
 #include <tf_conversions/tf_eigen.h>
 #include <tf/transform_listener.h>
 #include <tf/transform_broadcaster.h>
-#include <recongnition/GetTargetPose.h>
+#include <recongnition_msgs/GetTargetPose.h>
 #include <math.h>
 
 // alias
@@ -127,8 +127,8 @@ protected:
 		sensor_cloud_msg_ = sensor_msgs::PointCloud2(*msg);
 	}
 
-  bool target_recognition_callback(recongnition::GetTargetPose::Request& req,
-      recongnition::GetTargetPose::Response& res)
+  bool target_recognition_callback(recongnition_msgs::GetTargetPose::Request& req,
+      recongnition_msgs::GetTargetPose::Response& res)
 	{
     ROS_INFO("debug point yyy");
 

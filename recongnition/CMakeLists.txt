@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   shape_msgs
   std_msgs
   tf_conversions
+  recongnition_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -62,10 +63,10 @@ include_directories(include
 # )
 
 ## Generate services in the 'srv' folder
-add_service_files(
-   FILES
-   GetTargetPose.srv
-)
+#add_service_files(
+#   FILES
+#   GetTargetPose.srv
+#)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -75,11 +76,11 @@ add_service_files(
 # )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(
-        DEPENDENCIES
-                std_msgs
-                shape_msgs
-                pcl_msgs)
+#generate_messages(
+#        DEPENDENCIES
+#                std_msgs
+#                shape_msgs
+#               pcl_msgs)
 
 
 ################################################
@@ -126,6 +127,7 @@ catkin_package(
                 pcl_ros
                 pcl_msgs
                 tf_conversions
+                recongnition_msgs
                 message_runtime
 )
 
@@ -220,10 +222,10 @@ include_directories(
 # catkin_add_nosetests(test)
 
 add_executable(target_recognition_service src/target_recognition_service.cpp)
-add_dependencies(target_recognition_service ${PROJECT_NAME}_generate_messages_cpp)
+add_dependencies(target_recognition_service ${PROJECT_NAME}_generate_messages_cpp recongnition_msgs)
 target_link_libraries(target_recognition_service ${catkin_LIBRARIES})
 
 add_executable(target_recognition_node src/target_recongnition_node.cpp)
-add_dependencies(target_recognition_node ${PROJECT_NAME}_generate_messages_cpp)
+add_dependencies(target_recognition_node ${PROJECT_NAME}_generate_messages_cpp recongnition_msgs)
 target_link_libraries(target_recognition_node ${catkin_LIBRARIES})
 
