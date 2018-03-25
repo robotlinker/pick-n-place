@@ -15,7 +15,7 @@ int main(int argc, char **argv)
   srv.request.state = 1;
   if (client.call(srv))
   {
-    ROS_INFO("Sum: %ld", (long int)srv.response.success);
+    ROS_INFO("State: %ld", (long int)srv.response.success);
   }
   else
   {

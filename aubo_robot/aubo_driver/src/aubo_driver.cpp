@@ -2,6 +2,7 @@
 #include <string>
 #include <sys/timeb.h>
 
+
 namespace aubo_driver {
 
 // robot status parameters
@@ -32,6 +33,7 @@ AuboDriver::AuboDriver():BufferSize(200),io_flag_delay_(0.02)
     rib_pub = nh.advertise<std_msgs::Int32MultiArray>("rib_status", 100);
     io_srv_ = nh.advertiseService("aubo_driver/set_io",&AuboDriver::setIO, this);
     move_srv_ = nh.advertiseService("aubo_driver/move", &AuboDriver::move, this);
+    moveit_srv_ = nh.advertiseService("aubo_driver/moveit", &AuboDriver::moveit, this);
 
     // update_joint_state
     moveIt_controller_subs = nh.subscribe("moveItController_cmd", 2000, &AuboDriver::MoveItPosCallback,this);
@@ -320,6 +322,38 @@ void AuboDriver::TeachCallback(const std_msgs::Float32MultiArray::ConstPtr &msg)
         }
     }
 }
+
+bool AuboDriver::moveit(aubo_msgs::Moveit::Request &req, aubo_msgs::Moveit::Response &res)
+{
+    int rs;
+    if(controlMode == aubo_driver::SendTargetGoal)
+    {
+        for(int i=0; i<req.goal.trajectory.points.size(); i++)
+        {
+            double joints[6] = {req.goal.trajectory.points[i].positions[1], req.goal.trajectory.points[i].positions[2],req.goal.trajectory.points[i].positions[0],req.goal.trajectory.points[i].positions[3],req.goal.trajectory.points[i].positions[4],req.goal.trajectory.points[i].positions[5]};
+
+            if(road_point_compare(joints,targetPoint))
+            {
+                memcpy(targetPoint, joints, sizeof(double) * ARM_DOF);
+                if(ControllerConnectedFlag)
+                {
+                    if(i<req.goal.trajectory.points.size()-1)
+                        robotService.robotServiceJointMove(joints, false);
+                    else
+                        rs = robotService.robotServiceJointMove(joints, true);
+                }
+            }
+        }
+    }
+    if(rs == 0)
+    {
+        ROS_INFO("move to the goal with moveit!");
+        res.result.error_code = 0;
+    } 
+    else
+        res.result.error_code = 1;
+}
+
 
 bool AuboDriver::move(aubo_msgs::Move::Request &req, aubo_msgs::Move::Response &res)
 {

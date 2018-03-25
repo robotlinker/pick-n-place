@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(aubo_msgs)
 
-find_package(catkin REQUIRED COMPONENTS message_generation std_msgs)
+find_package(catkin REQUIRED COMPONENTS message_generation std_msgs control_msgs)
 
 add_message_files(
    FILES
@@ -19,12 +19,15 @@ add_service_files(
    SetPayload.srv
    SetIO.srv
    Move.srv
+   Moveit.srv
 )
+
 
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
    DEPENDENCIES
    std_msgs
+   control_msgs
 )
 
 catkin_package(
