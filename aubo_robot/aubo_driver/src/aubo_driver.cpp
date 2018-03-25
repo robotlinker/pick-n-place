@@ -328,7 +328,7 @@ bool AuboDriver::moveit(aubo_msgs::Moveit::Request &req, aubo_msgs::Moveit::Resp
     int rs;
     if(controlMode == aubo_driver::SendTargetGoal)
     {
-        for(int i=0; i<req.goal.trajectory.points.size(); i++)
+        for(int i=req.goal.trajectory.points.size()-1; i<req.goal.trajectory.points.size(); i++)
         {
             double joints[6] = {req.goal.trajectory.points[i].positions[1], req.goal.trajectory.points[i].positions[2],req.goal.trajectory.points[i].positions[0],req.goal.trajectory.points[i].positions[3],req.goal.trajectory.points[i].positions[4],req.goal.trajectory.points[i].positions[5]};
 
@@ -337,21 +337,12 @@ bool AuboDriver::moveit(aubo_msgs::Moveit::Request &req, aubo_msgs::Moveit::Resp
                 memcpy(targetPoint, joints, sizeof(double) * ARM_DOF);
                 if(ControllerConnectedFlag)
                 {
-                    if(i<req.goal.trajectory.points.size()-1)
-                        robotService.robotServiceJointMove(joints, false);
-                    else
-                        rs = robotService.robotServiceJointMove(joints, true);
+                    rs = robotService.robotServiceJointMove(joints, true);
                 }
             }
         }
     }
-    if(rs == 0)
-    {
-        ROS_INFO("move to the goal with moveit!");
-        res.result.error_code = 0;
-    } 
-    else
-        res.result.error_code = 1;
+    res.result.error_code = rs;
 }
 
 

@@ -22,6 +22,9 @@
   <!-- Convert robot real joint states to /tf tranforms -->
   <!--node name="real_state_rviz" pkg="aubo_control" type="real_state_rviz"/-->
 
+  <node pkg="aubo_driver" name="aubo_moveit_action_server" type="action_server.py" output="screen"/>
+
+  <include file="$(find aubo_i5_moveit_config)/launch/aubo_i5_moveit_planning_execution.launch"/> 
 
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find aubo_description)/aubo_i5.rviz"/>
 

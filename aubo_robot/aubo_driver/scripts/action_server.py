@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python
 import rospy
 import time
 import actionlib
@@ -12,11 +12,13 @@ def CB(goal):
     req = MoveitRequest(goal)
     res = Moveit_proxy.call(req)
     result = FollowJointTrajectoryResult()
-    if res.result.error_code is 0:
+    if result.error_code is 0:
         server.set_succeeded(result)
+    else:
+        server.set_aborted(result)
 
 
-rospy.init_node('test_action_server')
+rospy.init_node('aubo_action_server')
 server = actionlib.SimpleActionServer('/follow_joint_trajectory', FollowJointTrajectoryAction, CB, False)
 server.start()
 rospy.spin()
