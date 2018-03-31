@@ -6,8 +6,44 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <cv_bridge/cv_bridge.h>
-
+#include <string>
 #include <vector>
+#include <sstream>
+#include <tf/transform_broadcaster.h>
+
+#include <pcl/common/common.h>
+#include <pcl/common/common_headers.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl/point_types.h>
+#include <pcl/PCLPointCloud2.h>
+#include <pcl/conversions.h>
+#include <pcl_ros/transforms.h>
+
+#include <pcl/io/pcd_io.h>
+#include <pcl/point_types.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/ModelCoefficients.h>
+#include <pcl/filters/extract_indices.h>
+#include <pcl/features/normal_3d.h>
+#include <pcl/kdtree/kdtree.h>
+#include <pcl/sample_consensus/method_types.h>
+#include <pcl/sample_consensus/model_types.h>
+#include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/segmentation/extract_clusters.h>
+#include <pcl/io/ply_io.h>
+#include <pcl/point_cloud.h>
+#include <pcl/console/parse.h>
+#include <pcl/common/transforms.h>
+#include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/filters/passthrough.h>
+#include <pcl/filters/project_inliers.h>
+#include <pcl/surface/convex_hull.h>
+#include <pcl/PCLPointCloud2.h>
+
+#include <geometry_msgs/PoseArray.h>
+#include <tf/transform_listener.h>
+#include <geometry_msgs/PoseStamped.h>
+#include <boost/bind.hpp>
 
 
 using namespace cv;
@@ -145,6 +181,20 @@ bool GetPose(perception_msgs::GetPose::Request  &req,
     pub_img.encoding = sensor_msgs::image_encodings::BGR8;
     pub_img.image = src;
     pub.publish(pub_img.toImageMsg());
+    
+    double position_x;
+    double position_y;
+    double position_z;
+    position_x = res.dx;
+    position_y = res.dy;
+    position_z = res.dz;
+    
+    tf::TransformBroadcaster br;
+    tf::Transform transform;
+    transform.setOrigin( tf::Vector3(position_x, position_y, position_z) );
+    transform.setRotation( tf::Quaternion(0, 0, 0, 1) );
+    br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "marker_1", "world"));
+
   }
   return true;
 }
@@ -158,6 +208,7 @@ int main(int argc, char **argv)
   pub = nh.advertise<sensor_msgs::Image>("img_proc_rslt", 50);
 
   ros::ServiceServer service = nh.advertiseService("Get_pose", GetPose);
+
   ros::spin();
 
   return 0;

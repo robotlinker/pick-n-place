@@ -1,0 +1,6 @@
+# goal DEFINITION
+int64 signal
+---
+# result DEFINITION
+geometry_msgs/PoseStamped Square_pose
+int32 flag

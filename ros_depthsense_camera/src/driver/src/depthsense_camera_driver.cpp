@@ -1097,14 +1097,15 @@ void DepthSenseDriver::onNewDepthNodeSampleReceived( DepthSense::DepthNode node,
 
             static tf::TransformBroadcaster br;
             tf::Transform transform;
-            transform.setOrigin(tf::Vector3(0.0, 0.0, 0.0));
+            transform.setOrigin(tf::Vector3(0.37, -0.4, 0.1));
             tf::Quaternion q;
 
             if(_enable_accel)
             {
                 double roll = _lastImuMsg.orientation.x;
                 double pitch = _lastImuMsg.orientation.y;
-                q.setRPY( 90.0*DEG2RAD-roll, 0.0*DEG2RAD-pitch, 0.0*DEG2RAD);
+                //q.setRPY( 90.0*DEG2RAD-roll, 0.0*DEG2RAD-pitch, 0.0*DEG2RAD);
+                q.setRPY( 90.0*DEG2RAD-roll, 0.0*DEG2RAD-pitch, 90.0*DEG2RAD);
             }
             else
                 q.setRPY( 90.0*DEG2RAD, 0.0*DEG2RAD, 0.0*DEG2RAD);

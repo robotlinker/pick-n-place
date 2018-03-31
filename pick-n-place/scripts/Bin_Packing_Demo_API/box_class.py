@@ -5,7 +5,7 @@ from function import *
 import copy
 
 
-eef_length = 0.22
+eef_length = 0.23
 pre = 0.15
 post = 0.15
 
