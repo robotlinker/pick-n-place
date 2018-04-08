@@ -1,0 +1,11 @@
+<launch>
+  <node pkg="ensenso_camera" type="ensenso_camera_node" name="ensenso_camera_node">
+    <param name="serial" value="171366"/>
+    <param name="settings" value="/home/wcy/test_ws/src/ensenso/ensenso_camera/setup.json"/>
+  </node>
+
+    <node pkg="ensenso_camera" type="request_data" name="request_data"/>
+
+    <node pkg="tf" type="static_transform_publisher" name="ensenso_to_world" args="0.495 0.47 0.99 0.3826834 -0.9238795 0 0 world ensenso_optical_frame 10"/>   
+
+</launch>
