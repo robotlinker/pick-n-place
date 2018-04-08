@@ -33,7 +33,7 @@
     type="fixed">
     <parent link="base_Link"/>
     <child link="pedestal_Link"/>
-    <origin xyz="0.0 0.0 -0.40" rpy="0.0 0.0 0.0" />
+    <origin xyz="0.0 0.0 -0.40" rpy="0.0 0.0 0.785" />
   </joint>
 
 </robot>

@@ -32,7 +32,7 @@ class box_class:
     def generate_goal_pose(self, given_bin):
         self.goal_pose.position.x = self.goal_position[0]# + 0.5*self.inc_goal[0] + given_bin.goal_position[0] - 0.5*given_bin.width
         self.goal_pose.position.y = self.goal_position[1]# + 0.5*self.inc_goal[1] + given_bin.goal_position[1] - 0.5*given_bin.length
-        self.goal_pose.position.z = self.goal_position[2] + 0.3# + 0.5*self.inc_goal[2] + given_bin.goal_position[2]
+        self.goal_pose.position.z = self.goal_position[2] + 0.4# + 0.5*self.inc_goal[2] + given_bin.goal_position[2]
 
     def pick(self):
         rospy.logwarn("Picking Box: %s", self.id)
