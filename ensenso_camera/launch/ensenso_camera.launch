@@ -1,7 +1,7 @@
 <launch>
   <node pkg="ensenso_camera" type="ensenso_camera_node" name="ensenso_camera_node">
     <param name="serial" value="171366"/>
-    <param name="settings" value="/home/wcy/test_ws/src/ensenso/ensenso_camera/setup.json"/>
+    <param name="settings" value="/home/wcy/catkin_ws/src/ensenso_camera/setup.json"/>
   </node>
 
     <node pkg="ensenso_camera" type="request_data" name="request_data"/>

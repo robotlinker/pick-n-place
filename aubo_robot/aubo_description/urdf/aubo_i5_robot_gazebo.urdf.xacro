@@ -33,7 +33,36 @@
     type="fixed">
     <parent link="base_Link"/>
     <child link="pedestal_Link"/>
-    <origin xyz="0.0 0.0 -0.40" rpy="0.0 0.0 0.0" />
+    <origin xyz="0.0 0.0 -0.40" rpy="0.0 0.0 0.785" />
   </joint>
+
+<!-- Workcell -->
+
+  <link
+    name="workcell">
+    <visual>
+      <origin
+        xyz="-0.39 0.39 -1.15"
+        rpy="0 0 -0.785" />
+      <geometry>
+        <mesh filename="package://aubo_description/meshes/workcell.dae" />
+      </geometry>
+    </visual>
+    <collision>
+      <origin
+        xyz="-0.39 0.39 -1.15"
+        rpy="0 0 -0.785" />
+      <geometry>
+        <mesh filename="package://aubo_description/meshes/workcell.dae" />
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="base_to_workcell" type="fixed">
+    <parent link="base_Link"/>
+    <child link="workcell"/>
+  </joint>
+
+<!-- -->
 
 </robot>

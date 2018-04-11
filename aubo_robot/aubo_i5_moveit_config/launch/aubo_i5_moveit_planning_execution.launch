@@ -13,6 +13,6 @@
     <arg name="debug" default="$(arg debug)" />
   </include>
 
-  <!--node name="rviz" pkg="rviz" type="rviz" args="-d $(find aubo_description)/aubo_i5.rviz" /-->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find aubo_description)/aubo_i5.rviz" />
 
 </launch>

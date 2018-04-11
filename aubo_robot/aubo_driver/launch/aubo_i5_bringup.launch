@@ -26,7 +26,7 @@
 
   <include file="$(find aubo_i5_moveit_config)/launch/aubo_i5_moveit_planning_execution.launch"/> 
 
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find aubo_description)/aubo_i5.rviz"/>
+  <!--node name="rviz" pkg="rviz" type="rviz" args="-d $(find aubo_description)/aubo_i5.rviz"/-->
 
 </launch>
 

@@ -623,12 +623,32 @@
      name="${prefix}ee_Link">
      <collision>
        <geometry>
-          <box size="0.01 0.01 0.01"/>
+          <!--box size="0.01 0.01 0.01"/-->
+        <mesh
+          filename="package://aubo_description/meshes/End-effector.dae" />
        </geometry>
+       <!--origin 
+          rpy="0 0 0" 
+          xyz="0 0 0.05"/-->
        <origin 
           rpy="0 0 0" 
+
           xyz="0 0 0.05"/>
      </collision>
+     <visual>
+       <geometry>
+          <!--box size="0.01 0.01 0.01"/-->
+        <mesh
+          filename="package://aubo_description/meshes/End-effector.dae" />
+       </geometry>
+       <!--origin 
+          rpy="0 0 0" 
+
+          xyz="0 0 0.05"/-->
+       <origin 
+          rpy="0 0 2.35" 
+          xyz="0.089 0.043 -0.04"/>
+     </visual>
   </link>
   <joint 
      name="${prefix}ee_fixed_joint" 
