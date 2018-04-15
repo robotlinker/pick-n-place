@@ -40,7 +40,7 @@ mv.initial_pose()
 
 # Plan
 rospy.logwarn("START!")
-given_bin_list, box_list = database("data.xlsx") # Load database
+given_bin_list, box_list = database("/home/wcy/catkin_ws/src/demo/scripts/data.xlsx") # Load database
 i = box_list[0]
 num = 0
 

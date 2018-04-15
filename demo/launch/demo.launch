@@ -1,0 +1,4 @@
+<launch>
+    <node pkg="perception" name="vision_server" type="Square_detection_server"/>
+    <node pkg="demo" name="demo" type="demo.py" output="screen"/>
+</launch>
