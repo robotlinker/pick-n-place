@@ -1,21 +1,19 @@
 import tf.transformations
-import geometry_msgs.msg
-import math
-import numpy as np
+from geometry_msgs.msg import *
+from math import *
 
 
 def RPY2q(rpy):
+    Q = Quaternion()
+    q = tf.transformations.quaternion_from_euler(radians(rpy[0]), radians(rpy[1]), radians(rpy[2]))
+    Q.orientation.x = q[0]
+    Q.orientation.y = q[1]
+    Q.orientation.z = q[2]
+    Q.orientation.w = q[3]
     
-    p = geometry_msgs.msg.Pose()
-    q = tf.transformations.quaternion_from_euler(math.radians(rpy[0]), math.radians(rpy[1]), math.radians(rpy[2]))
-    p.orientation.x = q[0]
-    p.orientation.y = q[1]
-    p.orientation.z = q[2]
-    p.orientation.w = q[3]
-    
-    return p.orientation
+    return Q
 
 def q2RPY(q):
-    (r,p,y)=tf.transformations.euler_from_quaternion([q.x, q.y, q.z, q.w])
+    (r,p,y) = tf.transformations.euler_from_quaternion([q.x, q.y, q.z, q.w])
     
     return [r,p,y]

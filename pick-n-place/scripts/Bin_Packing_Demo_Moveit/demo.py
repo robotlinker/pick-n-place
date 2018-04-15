@@ -1,52 +1,62 @@
 #!/usr/bin/env python
-# ROS
 import rospy
-import moveit_commander
+from std_msgs.msg import Float32MultiArray
+from geometry_msgs.msg import Point
+import math
 
-# Msg
-from geometry_msgs.msg import Pose, PoseStamped
-
-# Manipulation
-import env
-
-# Bin packing
 from box_class import *
 from database import *
+from function import *
+import move as mv
+import vision_server as vs
+import eef_server as es
+
+# Initialization
+pub_pose = rospy.Publisher('moveAPI_cmd', Float32MultiArray, queue_size=1000)
+pub_plan = rospy.Publisher('plan_type', Float32MultiArray, queue_size=1)
+rospy.init_node('demo', anonymous=True)
 
 # Parameters
 
 
-# ROS node
-rospy.init_node("demo", anonymous=True)
-
-# Initiation of Moveit
-scene = moveit_commander.PlanningSceneInterface()
-robot = moveit_commander.RobotCommander() 
-arm = moveit_commander.MoveGroupCommander("arm_group")
-scene = moveit_commander.PlanningSceneInterface()
-rospy.sleep(1)
-
 # Functions
-def init_pose():
-    arm.set_joint_value_target([0,0,0,0,0,0])
+def syn():
+    plantype = Float32MultiArray()
+    plantype.data = [0, 2]
+    pub_plan.publish(plantype)
+    rospy.sleep(1)
+    plantype.data = [0, 1]
+    pub_plan.publish(plantype)
 
-# Env setup
-init_pose()
-env.init(scene)
+def BPplanner(given_bin_list, box_list):
+    # Goal pose of box
+    for i in box_list:
+        i.rot_goal = 1
+        i.goal_position = [0.6, -0.2, -0.5]
+
+# Synchronization
+syn()
+
+# Initial Setup
+mv.initial_pose()
 
 # Plan
 rospy.logwarn("START!")
 given_bin_list, box_list = database("data.xlsx") # Load database
-for i in box_list:
-    box_pose = PoseStamped() # get box_pose from vision system
-    env.generate_box(scene, i, box_pose) # generate a box in env.
-    i.pick(scene, arm)
-    
-    i.place(scene, arm, given_bin_list[0])
-    env.clear(scene, i)
-init_pose()
+BPplanner(given_bin_list, box_list)
+i = box_list[0]
+
+while not rospy.is_shutdown():
+    mv.detection_pose()
+    if cs.pick(i) is 0:
+        print "No Object detected!"
+        continue
+    else:
+        print "Object detected!"
+    mv.grasp_pose()
+    mv.pick(i)
+    mv.place(i)
+    raw_input("Continue...")
 rospy.logwarn("FINISH!")
-
-
 
 

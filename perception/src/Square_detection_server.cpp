@@ -37,7 +37,6 @@ using namespace cv;
 using namespace std;
 
 typedef pcl::PointCloud<pcl::PointXYZ> Cloud;
-//typedef boost::shared_ptr<tf::TransformListener> TransformListenerPtr;
 typedef struct 
 {
   int square_index;
@@ -48,18 +47,13 @@ Point Center;
 geometry_msgs::Pose output;
 ros::Publisher pub;
 Mat src;
+pcl::PCLPointCloud2 pcl_src;
 double Angle;
 float P2M = 6.5e-4;
-int thresh = 1200, N = 1; //50;5
+int thresh = 1200;
+int N = 1;
 vector<vector<Point> > squares;
 pcl::PointCloud<pcl::PointXYZ>::Ptr sensor_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>);
-double trans_x;
-double trans_y;
-double trans_z;
-double q_w;
-double q_x;
-double q_y;
-double q_z;
 
 // Function declarations
 void drawAxis(Mat&, Point, Point, Scalar, const float);
@@ -95,9 +89,9 @@ target_square findSquares( const Mat& image, vector<vector<Point> >& squares )
 
     // blur will enhance edge detection
     Mat timg;
-    src.copyTo(timg);
+    image.copyTo(timg);
     Mat img_mei;
-    src.copyTo(img_mei);
+    image.copyTo(img_mei);
 
     medianBlur(img_mei, timg, 9);
     Mat gray0(timg.size(), CV_8U), gray;
@@ -150,7 +144,7 @@ target_square findSquares( const Mat& image, vector<vector<Point> >& squares )
                 // area may be positive or negative - in accordance with the
                 // contour orientation
                 if( approx.size() == 4 &&
-                    fabs(contourArea(Mat(approx))) > 1000 && fabs(contourArea(Mat(approx))) < 100000 &&
+                    fabs(contourArea(Mat(approx))) > 1000 && fabs(contourArea(Mat(approx))) < 10000 &&
                     isContourConvex(Mat(approx)) )
                 {
                     double maxCosine = 0;
@@ -178,6 +172,7 @@ target_square findSquares( const Mat& image, vector<vector<Point> >& squares )
     minEnclosingCircle( squares[Tsquare.square_index], Tsquare.square_center, radius);
     return Tsquare;
 }
+
 
 //////////////////////////////////////////////////////////////////////////////
 void drawAxis(Mat& img, Point p, Point q, Scalar colour, const float scale = 0.2)
@@ -209,15 +204,14 @@ double getOrientation(const Mat& image, vector<vector<Point> >& squares)
     length1 = sqrt((p1_.x - p2_.x) * (p1_.x - p2_.x) + (p1_.y - p2_.y) * (p1_.y - p2_.y));
     length2 = sqrt((p2_.x - p3_.x) * (p2_.x - p3_.x) + (p2_.y - p3_.y) * (p2_.y - p3_.y));
     Angle = atan2((double)p1_.y - p2_.y, (double) p1_.x - p2_.x);
-    Angle *= 180/CV_PI;
 
-    circle(src, Center, 5, Scalar(255, 0, 0), -1);  
+    circle(image, Center, 5, Scalar(255, 0, 0), -1);  
   }
   int l = 40;
   Point temp1 = Point((int)Center.x + cos(Angle*CV_PI/180 + CV_PI/2)*l, (int)Center.y + sin(Angle*CV_PI/180 + CV_PI/2)*l);
   Point temp2 = Point((int)Center.x + cos((Angle-90)*CV_PI/180 + CV_PI/2)*l, (int)Center.y + sin((Angle-90)*CV_PI/180 + CV_PI/2)*l);
-  line(src, Center, temp1, Scalar(0, 0, 255), 3, CV_AA);
-  line(src, Center, temp2, Scalar(0, 255, 0), 3, CV_AA);
+  line(image, Center, temp1, Scalar(0, 0, 255), 3, CV_AA);
+  line(image, Center, temp2, Scalar(0, 255, 0), 3, CV_AA);
 
   return Angle;
 }
@@ -227,21 +221,13 @@ void imageCb (const sensor_msgs::ImageConstPtr& msg)
   // Load image
   cv_bridge::CvImagePtr cv_ptr;
   cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
-  src = cv_ptr->image; //640*480
+  src = cv_ptr->image; // 1920*1080
 }
 
 void point_cloud_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2>& msg)
 {
-  pcl::PCLPointCloud2 pcl_src;
   pcl_conversions::toPCL(*msg, pcl_src);
-  pcl::fromPCLPointCloud2(pcl_src, *sensor_cloud_ptr); //320*240
-
-  Eigen::Affine3f transform = Eigen::Affine3f::Identity();
-  
-  transform.translation() << trans_x, trans_y, trans_z; 
-  transform.rotate (Eigen::Quaternionf(q_w, q_x, q_y, q_z));
-
-  pcl::transformPointCloud (*sensor_cloud_ptr, *sensor_cloud_ptr, transform);
+  pcl::fromPCLPointCloud2(pcl_src, *sensor_cloud_ptr); // 512*424
 }
 
 
@@ -255,18 +241,17 @@ bool SquareDetection(perception_msgs::SquareDetection::Request &req,
     res.Square_pose.pose = empty;
     res.flag = 0;   
   }
-  else
+  else if( req.signal == 1 && src.rows != 0)
   { 
-    target_square Target_square = findSquares(src, squares);
-    drawSquares(src, squares);
+    Mat dst = src(Rect(540, 330, 500, 350));//src(Rect(120, 130, 200, 130));
+    imwrite("test.jpg", dst);
+    target_square Target_square = findSquares(dst, squares);
 
     // Publish output
     if(squares.size() != 0){
 
-      Angle = getOrientation(src, squares);
-
-      int pixel_x = 0.5*Target_square.square_center.x;
-      int pixel_y = 0.5*Target_square.square_center.y;
+      Angle = getOrientation(dst, squares);
+      drawSquares(dst, squares);
 
       Point tp1 = squares[squares.size()-1][0];
       Point tp2 = squares[squares.size()-1][1];
@@ -274,33 +259,77 @@ bool SquareDetection(perception_msgs::SquareDetection::Request &req,
       Point tp4 = squares[squares.size()-1][3];
       Point Target_center = Point((int)(tp1.x+tp2.x+tp3.x+tp4.x)/4, (int)(tp1.y+tp2.y+tp3.y+tp4.y)/4);
 
-      res.Square_pose.pose.position.x = sensor_cloud_ptr->at(0.5*Target_center.x, 0.5*Target_center.y).x;
-      res.Square_pose.pose.position.y = sensor_cloud_ptr->at(0.5*Target_center.x, 0.5*Target_center.y).y;
-      res.Square_pose.pose.position.z = sensor_cloud_ptr->at(0.5*Target_center.x, 0.5*Target_center.y).z;
-      res.Square_pose.pose.orientation.w = cos(Angle*CV_PI/180);
-      res.Square_pose.pose.orientation.z = sin(Angle*CV_PI/180);
-      res.flag = 1;
+      Target_center.x += 540;
+      Target_center.y += 330;
+
+      cout << Target_center << endl;
+
+      Point pcl_Target_center;
+
+      pcl_Target_center.x = (int) Target_center.x * pcl_src.width / src.cols;
+      pcl_Target_center.y = (int) Target_center.y * pcl_src.height / src.rows;
+
+      cout << pcl_Target_center << endl;
+      cout << "===" << endl;
+
+      float x_pc, y_pc, z_pc;
+
+      x_pc = sensor_cloud_ptr->at(pcl_Target_center.x, pcl_Target_center.y).x;
+      y_pc = sensor_cloud_ptr->at(pcl_Target_center.x, pcl_Target_center.y).y;
+      z_pc = sensor_cloud_ptr->at(pcl_Target_center.x, pcl_Target_center.y).z;
+
+      if(isnan(x_pc))
+      {
+        x_pc = -1;
+        y_pc = -1;
+        z_pc = -1;
+      }
+      
 
       static tf::TransformBroadcaster br;
+      static tf::TransformListener listener;
+
       tf::Transform transform;
     
-      transform.setOrigin( tf::Vector3(res.Square_pose.pose.position.x, res.Square_pose.pose.position.y, res.Square_pose.pose.position.z) );
-      tf::Quaternion transform_orientation;
-      tf::quaternionMsgToTF(res.Square_pose.pose.orientation, transform_orientation);
+      transform.setOrigin( tf::Vector3(x_pc, y_pc, z_pc) );
+      tf::Quaternion transform_orientation = tf::createQuaternionFromRPY(3.14, 0, Angle);
       transform.setRotation( transform_orientation );
-      br.sendTransform(tf::StampedTransform(transform, t, "world", "target_box"));
-      
+      br.sendTransform(tf::StampedTransform(transform, t, "kinect2_ir_optical_frame", "target_box"));
+
+      tf::StampedTransform getTransform;
+      listener.waitForTransform("/world","/target_box", ros::Time(), ros::Duration(1.0));
+      try{
+        listener.lookupTransform("/world","/target_box", ros::Time(0), getTransform);
+      }
+      catch (tf::TransformException ex){
+        ROS_ERROR("%s",ex.what());
+        ros::Duration(1.0).sleep();
+      }
+      res.Square_pose.pose.position.x = getTransform.getOrigin().x();
+      res.Square_pose.pose.position.y = getTransform.getOrigin().y();
+      res.Square_pose.pose.position.z = getTransform.getOrigin().z();
+      res.Square_pose.pose.orientation.x = getTransform.getRotation().x();
+      res.Square_pose.pose.orientation.y = getTransform.getRotation().y();
+      res.Square_pose.pose.orientation.z = getTransform.getRotation().z();
+      res.Square_pose.pose.orientation.w = getTransform.getRotation().w();
+      res.flag = 1;
     }
-    else{
+    else
+    {
       res.Square_pose.pose = empty;
-      res.flag = 0;
-    }     
+      res.flag = 2;
+    }    
 
     cv_bridge::CvImage pub_img;
     pub_img.encoding = sensor_msgs::image_encodings::BGR8;
-    pub_img.image = src;
+    pub_img.image = dst;
     pub.publish(pub_img.toImageMsg());
     src.release();
+  }
+  else
+  {
+    res.Square_pose.pose = empty;
+    res.flag = 0;    
   }
   return true;
 }
@@ -310,30 +339,9 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "Square_detection_server");
   ros::NodeHandle nh;
 
-  ros::Subscriber sub = nh.subscribe("/depthsense/image_raw", 1, imageCb);
-  ros::Subscriber point_cloud_subscriber = nh.subscribe("/depthsense/points",1, point_cloud_callback);
+  ros::Subscriber sub = nh.subscribe("/kinect2/hd/image_color_rect", 1, imageCb);
+  ros::Subscriber point_cloud_subscriber = nh.subscribe("/kinect2/sd/points",1, point_cloud_callback);
   pub = nh.advertise<sensor_msgs::Image>("img_proc_rslt", 50);
-
-  tf::TransformListener listener;
-  tf::StampedTransform Twk;
-  listener.waitForTransform("/world","/depth_frame", ros::Time(), ros::Duration(1.0));
-  try
-  {
-    listener.lookupTransform("/world","/depth_frame", ros::Time(), Twk);
-  }
-  catch (tf::TransformException ex)
-  {
-    ROS_ERROR("%s", ex.what());
-    ros::Duration(1.0).sleep();
-  }
-
-  trans_x = Twk.getOrigin().getX();
-  trans_y = Twk.getOrigin().getY();
-  trans_z = Twk.getOrigin().getZ();
-  q_w = Twk.getRotation().getW();
-  q_x = Twk.getRotation().getX();
-  q_y = Twk.getRotation().getY();
-  q_z = Twk.getRotation().getZ();
 
   ros::ServiceServer service = nh.advertiseService("Square_detection", SquareDetection);
   ros::spin();

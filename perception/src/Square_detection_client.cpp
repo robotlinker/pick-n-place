@@ -14,7 +14,6 @@ int main(int argc, char **argv)
   while(ros::ok){
     if (client.call(srv))
     {
-      std::cout<<"Hello"<<std::endl;
       ROS_INFO("dx: %.4f", srv.response.Square_pose.pose.position.x);
       ROS_INFO("dy: %.4f", srv.response.Square_pose.pose.position.y);
       ROS_INFO("dz: %.4f", srv.response.Square_pose.pose.position.z);

@@ -33,13 +33,9 @@ catkin_package(CATKIN_DEPENDS message_runtime std_msgs)
 
 include_directories(${OpenCV_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
 
-add_executable(Get_pose_server src/Get_pose_server.cpp)
-target_link_libraries(Get_pose_server ${OpenCV_LIBRARIES} ${catkin_LIBRARIES})
-add_dependencies(Get_pose_server perception_msgs) 
-
-add_executable(Client src/Client.cpp)
-target_link_libraries(Client ${OpenCV_LIBRARIES} ${catkin_LIBRARIES})
-add_dependencies(Client perception_msgs) 
+add_executable(pcl_server src/pcl_server.cpp)
+target_link_libraries(pcl_server ${OpenCV_LIBRARIES} ${catkin_LIBRARIES})
+add_dependencies(pcl_server perception_msgs) 
 
 add_executable(Square_detection_server src/Square_detection_server.cpp)
 target_link_libraries(Square_detection_server ${OpenCV_LIBRARIES} ${catkin_LIBRARIES})

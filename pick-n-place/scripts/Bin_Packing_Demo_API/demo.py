@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import sys 
 import rospy
 from std_msgs.msg import Float32MultiArray
 from geometry_msgs.msg import Point
@@ -8,16 +9,13 @@ from box_class import *
 from database import *
 from function import *
 import move as mv
-import camera_server as cs
+import vision_server as vs
 import eef_server as es
 
 # Initialization
 pub_pose = rospy.Publisher('moveAPI_cmd', Float32MultiArray, queue_size=1000)
 pub_plan = rospy.Publisher('plan_type', Float32MultiArray, queue_size=1)
 rospy.init_node('demo', anonymous=True)
-
-# Parameters
-
 
 # Functions
 def syn():
@@ -28,11 +26,10 @@ def syn():
     plantype.data = [0, 1]
     pub_plan.publish(plantype)
 
-def BPplanner(given_bin_list, box_list):
-    # Goal pose of box
-    for i in box_list:
-        i.rot_goal = 1
-        i.goal_position = [0.6, -0.2, -0.5]
+def debug():
+    es.off()
+    mv.initial_pose()
+    sys.exit()
 
 # Synchronization
 syn()
@@ -43,20 +40,26 @@ mv.initial_pose()
 # Plan
 rospy.logwarn("START!")
 given_bin_list, box_list = database("data.xlsx") # Load database
-BPplanner(given_bin_list, box_list)
 i = box_list[0]
+num = 0
 
 while not rospy.is_shutdown():
-    mv.detection_pose()
-    if cs.pick(i) is 0:
-        print "No Object detected!"
-        continue
+    if vs.pick(i):
+        rospy.logwarn("Object detected!")
+        if mv.grasp_pose():
+            if mv.pick(i):
+                if mv.place(i):
+                    num += 1
+                    rospy.loginfo("Finish: %d", num)
+                else:
+                    debug()
+            else:
+                debug()
+        else:
+            debug()
+        #raw_input("Continue...")
+        mv.initial_pose()
     else:
-        print "Object detected!"
-    mv.grasp_pose()
-    mv.pick(i)
-    mv.place(i)
-    raw_input("Continue...")
+        rospy.logwarn("No object detected!")
+        break
 rospy.logwarn("FINISH!")
-
-

@@ -42,7 +42,7 @@
     name="workcell">
     <visual>
       <origin
-        xyz="-0.39 0.39 -1.15"
+        xyz="-0.45 0.29 -1.15"
         rpy="0 0 -0.785" />
       <geometry>
         <mesh filename="package://aubo_description/meshes/workcell.dae" />
@@ -50,7 +50,7 @@
     </visual>
     <collision>
       <origin
-        xyz="-0.39 0.39 -1.15"
+        xyz="-0.45 0.29 -1.15"
         rpy="0 0 -0.785" />
       <geometry>
         <mesh filename="package://aubo_description/meshes/workcell.dae" />

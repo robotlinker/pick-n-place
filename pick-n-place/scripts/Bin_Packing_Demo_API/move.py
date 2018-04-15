@@ -1,9 +1,15 @@
 #!/usr/bin/env python
 import rospy
-import math
+from math import *
 from aubo_msgs.srv import *
 import eef_server as es
 
+def feedback(state):
+    if state is 1:
+        rospy.loginfo("DONE!")
+    elif state is -1:
+        rospy.logerr("Fail!")
+    return state
 
 def move(typ, data):
     
@@ -11,52 +17,59 @@ def move(typ, data):
     Move_proxy = rospy.ServiceProxy("aubo_driver/move", Move)
     req = MoveRequest(typ, data)
     res = Move_proxy.call(req)
-
+    return res.success
 
 def deg2rad(joints):
 
-    return [math.radians(i) for i in joints]
+    return [radians(i) for i in joints]
 
 def joint_cmd(joints):
 
-    move(0, deg2rad(joints))
-
-
-def rotation_cmd(angle, axis = "Z"):
-    
-    if axis is "X":
-        move(2, [math.radians(angle), 1, 0, 0])
-    elif axis is "Y":
-        move(2, [math.radians(angle), 0, 1, 0])
-    elif axis is "Z":
-        move(2, [math.radians(angle), 0, 0, 1])
+    return move(0, deg2rad(joints))
 
 def pose_cmd(pose):
     
-    move(4, [pose.position.x, pose.position.y, pose.position.z])
+    return move(4, [pose.position.x, pose.position.y, pose.position.z])
 
 def initial_pose():
     rospy.logwarn("INITIAL POSE")  
-    joint_cmd([0, 0, 0, 0, 0, 0])
-
+    if joint_cmd([0, 0, 0, 0, 0, 0]):
+        return feedback(1)
+    else:
+        return feedback(-1)
 def grasp_pose():  
     rospy.logwarn("GRASP POSE")  
-    joint_cmd([-30, -31.46, 112.90, 59.11, 91.27, -53.87])
-
-def detection_pose():
-    rospy.logwarn("DETECTION POSE")  
-    joint_cmd([-47.2, -32.0, 78.6, 6.7, 110.2, -78.7])
+    if joint_cmd([22.03, -27.21, 91.17, 17.3, 89.43, 20.68]):
+        return feedback(1)
+    else:
+        return feedback(-1)
 
 def pick(box_i):
+    rospy.logwarn("PICKING...") 
     target = box_i.pick()
-    pose_cmd(target[0])
-    pose_cmd(target[2])
-    es.on()
-    pose_cmd(target[3])
+    if pose_cmd(target[0]):
+        if pose_cmd(target[2]):
+            es.on()
+            if pose_cmd(target[3]):
+                return feedback(1)
+            else:
+                return feedback(-1)
+        else:
+            return feedback(-1)
+    else:
+        return feedback(-1)
 
 def place(box_i):
+    rospy.logwarn("PLACING...") 
     target = box_i.place()
-    pose_cmd(target[0])
-    pose_cmd(target[2])
-    es.off()
-    pose_cmd(target[3])
+    if pose_cmd(target[0]):
+        if pose_cmd(target[2]):
+            es.off()
+            if pose_cmd(target[3]):
+                return feedback(1)
+            else:
+                return feedback(-1)
+        else:
+            return feedback(-1)
+    else:
+        return feedback(-1)
