@@ -47,7 +47,7 @@ Point Center;
 geometry_msgs::Pose output;
 ros::Publisher pub;
 Mat src;
-pcl::PCLPointCloud2 pcl_src;
+
 double Angle;
 float P2M = 6.5e-4;
 int thresh = 1200;
@@ -226,8 +226,9 @@ void imageCb (const sensor_msgs::ImageConstPtr& msg)
 
 void point_cloud_callback(const boost::shared_ptr<const sensor_msgs::PointCloud2>& msg)
 {
+  pcl::PCLPointCloud2 pcl_src;
   pcl_conversions::toPCL(*msg, pcl_src);
-  pcl::fromPCLPointCloud2(pcl_src, *sensor_cloud_ptr); // 512*424
+  pcl::fromPCLPointCloud2(pcl_src, *sensor_cloud_ptr); // 1920*1080
 }
 
 
@@ -243,8 +244,8 @@ bool SquareDetection(perception_msgs::SquareDetection::Request &req,
   }
   else if( req.signal == 1 && src.rows != 0)
   { 
-    Mat dst = src(Rect(540, 330, 500, 350));//src(Rect(120, 130, 200, 130));
-    imwrite("test.jpg", dst);
+    Mat dst = src(Rect(540, 330, 500, 350));
+    //imwrite("test.jpg", dst);
     target_square Target_square = findSquares(dst, squares);
 
     // Publish output
@@ -259,24 +260,14 @@ bool SquareDetection(perception_msgs::SquareDetection::Request &req,
       Point tp4 = squares[squares.size()-1][3];
       Point Target_center = Point((int)(tp1.x+tp2.x+tp3.x+tp4.x)/4, (int)(tp1.y+tp2.y+tp3.y+tp4.y)/4);
 
-      Target_center.x += 540;
-      Target_center.y += 330;
-
-      cout << Target_center << endl;
-
-      Point pcl_Target_center;
-
-      pcl_Target_center.x = (int) Target_center.x * pcl_src.width / src.cols;
-      pcl_Target_center.y = (int) Target_center.y * pcl_src.height / src.rows;
-
-      cout << pcl_Target_center << endl;
-      cout << "===" << endl;
+      int offset_x = 540 - 265;
+      int offset_y = 330 - 115;
 
       float x_pc, y_pc, z_pc;
 
-      x_pc = sensor_cloud_ptr->at(pcl_Target_center.x, pcl_Target_center.y).x;
-      y_pc = sensor_cloud_ptr->at(pcl_Target_center.x, pcl_Target_center.y).y;
-      z_pc = sensor_cloud_ptr->at(pcl_Target_center.x, pcl_Target_center.y).z;
+      x_pc = sensor_cloud_ptr->at(Target_center.x + offset_x, Target_center.y + offset_y).x;
+      y_pc = sensor_cloud_ptr->at(Target_center.x + offset_x, Target_center.y + offset_y).y;
+      z_pc = sensor_cloud_ptr->at(Target_center.x + offset_x, Target_center.y + offset_y).z;
 
       if(isnan(x_pc))
       {
@@ -294,7 +285,7 @@ bool SquareDetection(perception_msgs::SquareDetection::Request &req,
       transform.setOrigin( tf::Vector3(x_pc, y_pc, z_pc) );
       tf::Quaternion transform_orientation = tf::createQuaternionFromRPY(3.14, 0, Angle);
       transform.setRotation( transform_orientation );
-      br.sendTransform(tf::StampedTransform(transform, t, "kinect2_ir_optical_frame", "target_box"));
+      br.sendTransform(tf::StampedTransform(transform, t, "ensenso_optical_frame", "target_box"));
 
       tf::StampedTransform getTransform;
       listener.waitForTransform("/world","/target_box", ros::Time(), ros::Duration(1.0));
@@ -340,7 +331,7 @@ int main(int argc, char **argv)
   ros::NodeHandle nh;
 
   ros::Subscriber sub = nh.subscribe("/kinect2/hd/image_color_rect", 1, imageCb);
-  ros::Subscriber point_cloud_subscriber = nh.subscribe("/kinect2/sd/points",1, point_cloud_callback);
+  ros::Subscriber point_cloud_subscriber = nh.subscribe("/point_cloud",1, point_cloud_callback);
   pub = nh.advertise<sensor_msgs::Image>("img_proc_rslt", 50);
 
   ros::ServiceServer service = nh.advertiseService("Square_detection", SquareDetection);
