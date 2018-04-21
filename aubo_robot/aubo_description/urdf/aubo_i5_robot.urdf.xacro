@@ -45,7 +45,7 @@
         xyz="-0.45 0.29 -1.15"
         rpy="0 0 -0.785" />
       <geometry>
-        <mesh filename="package://aubo_description/meshes/workcell.dae" />
+        <mesh filename="package://aubo_description/meshes/workcell.STL" />
       </geometry>
     </visual>
     <collision>

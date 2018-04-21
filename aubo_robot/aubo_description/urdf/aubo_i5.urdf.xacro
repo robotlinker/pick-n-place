@@ -639,7 +639,7 @@
        <geometry>
           <!--box size="0.01 0.01 0.01"/-->
         <mesh
-          filename="package://aubo_description/meshes/End-effector.dae" />
+          filename="package://aubo_description/meshes/End-effector.STL" />
        </geometry>
        <!--origin 
           rpy="0 0 0" 
