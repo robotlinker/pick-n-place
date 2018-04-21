@@ -13,7 +13,6 @@ import vision_server as vs
 import eef_server as es
 
 signal = 0
-
 def callback(data):
     global signal
     signal = data.data
