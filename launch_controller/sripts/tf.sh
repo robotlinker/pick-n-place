@@ -1,4 +1,4 @@
 cd
-cd catkin_ws
+cd aubo_robot/
 source devel/setup.bash
 rosrun tf2_web_republisher tf2_web_republisher

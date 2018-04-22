@@ -12,7 +12,7 @@ ensenso_flag = 0
 def aubo_callback(data):
     global aubo_flag
     if data.data is 1 and aubo_flag is 0:
-        os.system("./Aubo_real.sh&")
+        os.system("roslaunch aubo_driver aubo_i5_bringup.launch&")
         aubo_flag = 1
     if data.data is -1 and aubo_flag is 1:
         os.system("rosnode kill /rviz")
@@ -25,7 +25,7 @@ def aubo_callback(data):
 def kinect2_callback(data):
     global kinect2_flag
     if data.data is 1 and kinect2_flag is 0:
-        os.system("./kinect.sh&")
+        os.system("roslaunch kinect2_bridge kinect2_bridge.launch&")
         kinect2_flag = 1
     if data.data is -1 and kinect2_flag is 1:
         os.system("rosnode kill /kinect2")
@@ -34,7 +34,7 @@ def kinect2_callback(data):
 def ensenso_callback(data):
     global ensenso_flag
     if data.data is 1 and ensenso_flag is 0:
-        os.system("./ensenso.sh&")
+        os.system("roslaunch ensenso_camera ensenso_camera.launch&")
         ensenso_flag = 1
     if data.data is -1 and ensenso_flag is 1:
         os.system("rosnode kill /request_data")
@@ -45,12 +45,9 @@ def ensenso_callback(data):
 
 rospy.init_node('launch_controller', anonymous=True)
 
-os.system("sudo chmod +x *.sh")
-os.system("./web.sh&")
-os.system("./tf.sh&")
+os.system("roslaunch rosbridge_server rosbridge_websocket.launch&")
+os.system("rosrun tf2_web_republisher tf2_web_republisher&")
 
-rospy.Subscriber("rosbridge_launch", Int8, rosbridge_callback)
-rospy.Subscriber("tf2_launch", Int8, tf2_callback)
 rospy.Subscriber("aubo_launch", Int8, aubo_callback)
 rospy.Subscriber("kinect2_launch", Int8, kinect2_callback)
 rospy.Subscriber("ensenso_launch", Int8, ensenso_callback)
