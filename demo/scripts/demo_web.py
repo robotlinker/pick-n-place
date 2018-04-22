@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import sys 
 import rospy
+import os
 from std_msgs.msg import Float32MultiArray, Int8
 from geometry_msgs.msg import Point
 import math
@@ -52,7 +53,7 @@ mv.initial_pose()
 
 # Plan
 rospy.logwarn("START!")
-given_bin_list, box_list = database("/home/conghui/aubo_robot/src/demo/scripts/data.xlsx") # Load database
+given_bin_list, box_list = database(os.getcwd() + "data.xlsx") # Load database
 i = box_list[0]
 num = 0
 
