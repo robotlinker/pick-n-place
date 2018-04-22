@@ -43,14 +43,15 @@ def ensenso_callback(data):
         ensenso_flag = 0
     
 
-rospy.init_node('launch_controller', anonymous=True)
+def main():
+    rospy.init_node('launch_controller', anonymous=True)
 
-os.system("roslaunch rosbridge_server rosbridge_websocket.launch&")
-os.system("rosrun tf2_web_republisher tf2_web_republisher&")
-os.system("rosrun web_video_server web_video_server&")
+    os.system("roslaunch rosbridge_server rosbridge_websocket.launch&")
+    os.system("rosrun tf2_web_republisher tf2_web_republisher&")
+    os.system("rosrun web_video_server web_video_server&")
 
-rospy.Subscriber("aubo_launch", Int8, aubo_callback)
-rospy.Subscriber("kinect2_launch", Int8, kinect2_callback)
-rospy.Subscriber("ensenso_launch", Int8, ensenso_callback)
+    rospy.Subscriber("aubo_launch", Int8, aubo_callback)
+    rospy.Subscriber("kinect2_launch", Int8, kinect2_callback)
+    rospy.Subscriber("ensenso_launch", Int8, ensenso_callback)
 
-rospy.spin()
+    rospy.spin()
